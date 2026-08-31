@@ -76,11 +76,11 @@ we don't even carry the `ios/` folder around.
 lib/
   main.dart          # entry point: boots bindings, loads settings, runs the app
   app.dart           # MaterialApp, theme, locale wiring
-  models/            # plain data classes: Session, Payment
+  models/            # plain data classes: Session, Payment, Expense, FeedItem
   data/              # storage + SMS plumbing (the "repository" layer)
     db/              #   SQLite open helper + repositories
     sms/             #   teleBirr parser, listener wiring, background handler
-  services/          # permissions, reconciliation, CSV export, settings
+  services/          # permissions, reconciliation, CSV/backup export, feedback
   providers/         # ChangeNotifiers the UI watches
   screens/           # one folder per screen
   widgets/           # shared components
@@ -209,6 +209,10 @@ payments(id, transaction_id UNIQUE, session_id → sessions,
          method 'telebirr'|'cash', amount_cents, payer_name, payer_phone,
          balance_after_cents, sms_timestamp_ms, created_at_ms)
 ```
+
+(This is the v1 schema as originally shipped. Step 18 adds an `expenses`
+table — same conventions — and the schema code learns to *migrate*;
+everything in this section still describes the foundation.)
 
 Three decisions worth internalizing:
 
@@ -522,7 +526,9 @@ rules.**
 The home screen (`lib/screens/home_screen.dart`) is deliberately two
 widgets in one: `_IdleView` (big circular START button + summary of the
 shift that just ended) and `_LiveSessionView` (LIVE banner, running total
-in `displaySmall`, payment count, Cash + Stop buttons, feed below). The
+in `displaySmall`, payment count, Cash + Stop buttons, feed below —
+a Fuel button joins the row in step 18, and the feed learns to show
+expenses in the same step). The
 `Consumer<SessionProvider>` at the top switches between them:
 
 ```dart
@@ -681,7 +687,10 @@ Two details that cost people real afternoons:
 
 The dashboard's export button exports **exactly the window on screen**
 (`DashboardProvider.windowFrom/windowTo`), so "what I see is what I
-send" — the summary card, chart and CSV can never disagree.
+send" — the summary card, chart and CSV can never disagree. (Step 16
+later replaces this with an explicit date-range picker: "what I see" is
+a good default, but reconciling against a monthly teleBirr statement
+needs *that month*, not the trailing seven days.)
 
 ## 11. Amharic localization
 
