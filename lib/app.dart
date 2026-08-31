@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -6,6 +8,7 @@ import 'data/db/payment_repository.dart';
 import 'data/sms/sms_service.dart';
 import 'l10n/app_localizations.dart';
 import 'l10n/l10n.dart';
+import 'models/payment.dart';
 import 'providers/dashboard_provider.dart';
 import 'providers/session_provider.dart';
 import 'screens/dashboard_screen.dart';
@@ -13,6 +16,7 @@ import 'screens/home_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'services/background_task_service.dart';
 import 'services/csv_export_service.dart';
+import 'services/payment_feedback_service.dart';
 import 'services/permissions_service.dart';
 import 'services/reconciliation_service.dart';
 import 'services/settings_service.dart';
@@ -25,10 +29,14 @@ class TaxiPayApp extends StatefulWidget {
     super.key,
     required this.settings,
     required this.app,
+    this.feedback,
   });
 
   final SettingsService settings;
   final AppDatabase app;
+
+  /// Beep/vibrate on captured payments; injectable for tests.
+  final PaymentFeedbackService? feedback;
 
   @override
   State<TaxiPayApp> createState() => _TaxiPayAppState();
@@ -36,6 +44,9 @@ class TaxiPayApp extends StatefulWidget {
 
 class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
   final BackgroundTaskService _backgroundTasks = BackgroundTaskService();
+  late final PaymentFeedbackService _feedback =
+      widget.feedback ?? PaymentFeedbackService();
+  StreamSubscription<Payment>? _feedbackSubscription;
   bool _reconciling = false;
 
   /// Explicit user language choice, or null = follow the system locale.
@@ -55,6 +66,15 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
     // native side even after the app was killed.
     SmsService.instance.start();
     _backgroundTasks.initialize();
+    // "It registered" without looking at the screen: every payment that
+    // lands while we're in the foreground (live listener or reconciliation)
+    // gets a beep + haptic. Background-isolate captures can't beep — that
+    // would need a real notification; the resume-time reconciliation still
+    // makes them visible.
+    _feedbackSubscription =
+        SmsService.instance.capturedPayments.listen((_) {
+      _feedback.paymentCaptured();
+    });
   }
 
   static ThemeMode _themeModeFromName(String? name) => switch (name) {
@@ -65,6 +85,7 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _feedbackSubscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }

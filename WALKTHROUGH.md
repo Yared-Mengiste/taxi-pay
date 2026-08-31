@@ -827,6 +827,41 @@ card (and under the START button when idle), not as a headline number.
 
 ---
 
+## 14. Payment feedback: beep + haptic
+
+**Flutter concepts: streams as side-effect buses, `SystemSound` /
+`HapticFeedback`, wrapping platform effects in injectable seams.**
+
+The user story: the driver is *driving* when a payment lands. A beep and
+a vibration confirm "it registered" without a glance — no reading, no
+tapping. The implementation lesson is that `SmsService.capturedPayments`
+is already a broadcast `Stream<Payment>` that exists precisely so that
+"any number of widgets may react" (step 5). The session UI reacts by
+reloading; feedback reacts by buzzing. No new capture plumbing:
+
+```dart
+_feedbackSubscription = SmsService.instance.capturedPayments.listen((_) {
+  _feedback.paymentCaptured();
+});
+```
+
+`PaymentFeedbackService` is two platform calls — `SystemSound.play(
+SystemSoundType.alert)` and `HapticFeedback.mediumImpact()` — behind two
+injectable constructor callbacks, the same seam pattern as the CSV
+service's `onShareFile`. Why not `flutter_local_notifications`? Because
+the app is foregrounded with the screen on (phone in a mount) exactly
+when capture fires, and the two services calls need **no permission, no
+dependency, no channel code**. The trade-off, documented in the class:
+captures written by the background isolate while the screen is off can't
+beep — that path would need a real notification, and the resume-time
+reconciliation already guarantees the rows appear.
+
+The widget test injects a counting fake and pushes a payment through
+`SmsService.instance.emitCaptured` — the very method reconciliation
+uses — proving the wiring without a platform channel in sight.
+
+---
+
 ## Build order recap
 
 | Commit | What it taught |
