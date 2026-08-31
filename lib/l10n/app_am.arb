@@ -41,6 +41,11 @@
   "themeLight": "ብርሃናማ",
   "themeDark": "ጨለማ",
 
+  "backupAction": "መጠባበቂያ ላክ",
+  "backupSubtitle": "ሙሉ መረጃዎን በአንድ ፋይል ያጋሩ",
+  "backupDone": "መጠባበቂያ ተዘጋጅል — የሚቀመጥበት ቦታ ይምረጡ።",
+  "backupFailed": "መጠባበቂያ አልተሳካም። እንደገና ይሞክሩ።",
+
   "dashboardTitle": "ሪፖርት",
   "periodDaily": "ዕለታዊ",
   "periodWeekly": "ሳምንታዊ",

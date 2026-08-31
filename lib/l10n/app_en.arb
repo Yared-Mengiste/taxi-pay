@@ -41,6 +41,11 @@
   "themeLight": "Light",
   "themeDark": "Dark",
 
+  "backupAction": "Export backup",
+  "backupSubtitle": "Share a copy of all your data as one file",
+  "backupDone": "Backup ready — choose where to keep it.",
+  "backupFailed": "Backup failed. Try again.",
+
   "dashboardTitle": "Dashboard",
   "periodDaily": "Daily",
   "periodWeekly": "Weekly",

@@ -116,6 +116,18 @@ class AppLocalizationsAm extends AppLocalizations {
   String get themeDark => 'ጨለማ';
 
   @override
+  String get backupAction => 'መጠባበቂያ ላክ';
+
+  @override
+  String get backupSubtitle => 'ሙሉ መረጃዎን በአንድ ፋይል ያጋሩ';
+
+  @override
+  String get backupDone => 'መጠባበቂያ ተዘጋጅል — የሚቀመጥበት ቦታ ይምረጡ።';
+
+  @override
+  String get backupFailed => 'መጠባበቂያ አልተሳካም። እንደገና ይሞክሩ።';
+
+  @override
   String get dashboardTitle => 'ሪፖርት';
 
   @override

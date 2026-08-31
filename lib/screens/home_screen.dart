@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../l10n/l10n.dart';
 import '../providers/session_provider.dart';
+import '../services/backup_service.dart';
 import '../util/dates.dart';
 import '../util/money.dart';
 import '../widgets/add_cash_sheet.dart';
@@ -13,12 +14,14 @@ import '../widgets/payment_tile.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({
     super.key,
+    this.backup,
     this.languageCode,
     this.onLanguageChanged,
     this.themeMode,
     this.onThemeModeChanged,
   });
 
+  final BackupService? backup;
   final String? languageCode;
   final Future<void> Function(String? code)? onLanguageChanged;
   final ThemeMode? themeMode;
@@ -40,6 +43,9 @@ class HomeScreen extends StatelessWidget {
                 onLanguageSelected: onLanguageChanged!,
                 currentTheme: themeMode ?? ThemeMode.system,
                 onThemeSelected: onThemeModeChanged!,
+                onExportBackup: backup == null
+                    ? null
+                    : () => _exportBackup(context, backup!),
               ),
               icon: const Icon(Icons.settings_rounded),
             ),
@@ -52,6 +58,26 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+
+  /// Copies the database and opens the share sheet; the snackbar lands
+  /// once sharing finishes (or fails). Messenger and strings are captured
+  /// before the await — the sheet and its context are gone by then.
+  Future<void> _exportBackup(BuildContext context, BackupService backup) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final doneMessage = context.l10n.backupDone;
+    final failMessage = context.l10n.backupFailed;
+    try {
+      final file = await backup.exportBackup();
+      if (file == null) throw const _BackupFailedException();
+      messenger.showSnackBar(SnackBar(content: Text(doneMessage)));
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(failMessage)));
+    }
+  }
+}
+
+class _BackupFailedException implements Exception {
+  const _BackupFailedException();
 }
 
 /// Settings sheet: language (Amharic primary, English secondary) and
@@ -62,6 +88,7 @@ Future<void> showSettingsSheet(
   required Future<void> Function(String? code) onLanguageSelected,
   required ThemeMode currentTheme,
   required Future<void> Function(ThemeMode mode) onThemeSelected,
+  VoidCallback? onExportBackup,
 }) {
   final l10n = context.l10n;
   return showModalBottomSheet<void>(
@@ -76,6 +103,20 @@ Future<void> showSettingsSheet(
             child: Text(l10n.settingsTitle,
                 style: Theme.of(sheetContext).textTheme.titleMedium),
           ),
+          if (onExportBackup != null) ...[
+            ListTile(
+              leading: const Icon(Icons.upload_file_rounded),
+              title: Text(l10n.backupAction),
+              subtitle: Text(l10n.backupSubtitle),
+              onTap: () {
+                // Pop first: the backup flow shows the system share sheet,
+                // and our modal shouldn't be stacked underneath it.
+                Navigator.of(sheetContext).pop();
+                onExportBackup();
+              },
+            ),
+            const Divider(),
+          ],
           RadioGroup<String?>(
             groupValue: currentLanguage,
             onChanged: (value) {

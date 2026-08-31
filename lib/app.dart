@@ -15,6 +15,7 @@ import 'screens/dashboard_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'services/background_task_service.dart';
+import 'services/backup_service.dart';
 import 'services/csv_export_service.dart';
 import 'services/payment_feedback_service.dart';
 import 'services/permissions_service.dart';
@@ -152,6 +153,7 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
               child: _HomeShell(
                 exporter:
                     CsvExportService(PaymentRepository(widget.app)),
+                backup: BackupService(widget.app),
                 languageCode: _languageCode,
                 onLanguageChanged: _setLanguage,
                 themeMode: _themeMode,
@@ -175,6 +177,7 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
 class _HomeShell extends StatefulWidget {
   const _HomeShell({
     required this.exporter,
+    required this.backup,
     required this.languageCode,
     required this.onLanguageChanged,
     required this.themeMode,
@@ -182,6 +185,7 @@ class _HomeShell extends StatefulWidget {
   });
 
   final CsvExportService exporter;
+  final BackupService backup;
   final String? languageCode;
   final Future<void> Function(String? code) onLanguageChanged;
   final ThemeMode themeMode;
@@ -202,6 +206,7 @@ class _HomeShellState extends State<_HomeShell> {
         index: _index,
         children: [
           HomeScreen(
+            backup: widget.backup,
             languageCode: widget.languageCode,
             onLanguageChanged: widget.onLanguageChanged,
             themeMode: widget.themeMode,

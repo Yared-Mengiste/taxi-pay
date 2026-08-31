@@ -120,6 +120,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeDark => 'Dark';
 
   @override
+  String get backupAction => 'Export backup';
+
+  @override
+  String get backupSubtitle => 'Share a copy of all your data as one file';
+
+  @override
+  String get backupDone => 'Backup ready — choose where to keep it.';
+
+  @override
+  String get backupFailed => 'Backup failed. Try again.';
+
+  @override
   String get dashboardTitle => 'Dashboard';
 
   @override

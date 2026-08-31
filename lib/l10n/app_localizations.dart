@@ -272,6 +272,30 @@ abstract class AppLocalizations {
   /// **'Dark'**
   String get themeDark;
 
+  /// No description provided for @backupAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Export backup'**
+  String get backupAction;
+
+  /// No description provided for @backupSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share a copy of all your data as one file'**
+  String get backupSubtitle;
+
+  /// No description provided for @backupDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup ready — choose where to keep it.'**
+  String get backupDone;
+
+  /// No description provided for @backupFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup failed. Try again.'**
+  String get backupFailed;
+
   /// No description provided for @dashboardTitle.
   ///
   /// In en, this message translates to:

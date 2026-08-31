@@ -862,6 +862,48 @@ uses — proving the wiring without a platform channel in sight.
 
 ---
 
+## 15. Backup export: sharing the SQLite file
+
+**Flutter/Dart concepts: file I/O services, SQLite WAL checkpoints,
+testing a real file-backed database on the host.**
+
+Fully offline means the SQLite file *is* the user's data — months of
+earnings, one file, one phone. `BackupService` is the cheap-but-honest
+insurance policy: checkpoint, copy to cache, share:
+
+```dart
+await _app.db.rawQuery('PRAGMA wal_checkpoint(FULL)');
+// ... then byte-copy db.path into the cache dir and share it
+```
+
+The subtlety is that pragma. SQLite in write-ahead-logging mode keeps
+recent commits in a `-wal` side file; a copy of just the main file can
+be missing the newest rows. `wal_checkpoint(FULL)` folds the WAL back
+into the database before the copy. It has to go through `rawQuery`
+(not `execute`) because the pragma *returns a result row* — the same
+Android quirk as `busy_timeout` in step 3.
+
+Everything else mirrors the CSV export service shape exactly: an
+injectable `cacheDir` and an injectable `onShareFile` (production
+default: `SharePlus.instance.share(ShareParams(files: [...]))`), so the
+test never touches a platform channel. What *is* different in the test:
+`openDatabase` over a real path in `Directory.systemTemp` instead of
+`inMemoryDatabasePath` — a backup of a database that has no file would
+be a very short test. The assertions then check the three things that
+can silently rot: the copy is byte-identical to the checkpointed
+source, the filename is timestamped (`taxi-pay-backup_20260831_…​.db`),
+and — the one that matters — the copy *opens* and answers queries with
+the rows you put in.
+
+The UI is one `ListTile` in the existing settings sheet: pop the sheet
+first, then run the export, because the system share sheet should not
+stack on top of our modal. Restore stays manual (copy the file back
+over the database path while the app isn't running) — a deliberate
+scope cut: export is the 90% case, and an in-app restore invites
+half-closed databases.
+
+---
+
 ## Build order recap
 
 | Commit | What it taught |
