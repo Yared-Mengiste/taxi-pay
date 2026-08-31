@@ -38,6 +38,7 @@ void main() {
         TaxiPayApp(settings: SettingsService(prefs), app: app));
     await tester.pumpAndSettle();
     expect(find.text('Welcome to Taxi Pay'), findsNothing);
-    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Taxi Pay'), findsOneWidget);
+    expect(find.text('START'), findsOneWidget);
   });
 }

@@ -41,6 +41,8 @@ class SessionProvider extends ChangeNotifier with WidgetsBindingObserver {
   Session? _lastEndedSession;
   List<Payment> _lastEndedPayments = const [];
 
+  bool _disposed = false;
+
   /// The running session, or null.
   Session? get activeSession => _activeSession;
 
@@ -90,7 +92,7 @@ class SessionProvider extends ChangeNotifier with WidgetsBindingObserver {
     _lastEndedPayments = _payments;
     _activeSession = null;
     _payments = [];
-    notifyListeners();
+    _notify();
   }
 
   Future<void> addCash({required int amountCents}) async {
@@ -108,7 +110,15 @@ class SessionProvider extends ChangeNotifier with WidgetsBindingObserver {
     _payments = _activeSession == null
         ? []
         : await _paymentsRepo.paymentsForSession(_activeSession!.id);
-    notifyListeners();
+    _notify();
+  }
+
+  /// [notifyListeners] after [dispose] is a state error — and legit here,
+  /// because [load] and stream callbacks are async and can land after the
+  /// widget tree that owned this provider is gone (fast teardown in tests,
+  /// hot restart in dev).
+  void _notify() {
+    if (!_disposed) notifyListeners();
   }
 
   /// Payments captured by the background isolate while we were backgrounded
@@ -120,6 +130,7 @@ class SessionProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _disposed = true;
     _subscription.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
