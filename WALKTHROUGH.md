@@ -35,9 +35,9 @@ consequences for the permission flow you'll see in step 2.
 7. [Session start/stop logic + persistence](#7-session-startstop-logic--persistence)
 8. [Live session screen](#8-live-session-screen)
 9. [Dashboard + charts](#9-dashboard--charts)
-10. CSV export
-11. Amharic localization
-12. Polish pass: theming, dark mode, empty states
+10. [CSV export](#10-csv-export)
+11. [Amharic localization](#11-amharic-localization)
+12. [Polish pass: theming, dark mode, empty states](#12-polish-pass-theming-dark-mode-empty-states)
 
 ---
 
@@ -727,3 +727,71 @@ Gregorian/English. Localizing them means threading `intl`'s
 `initializeDateFormatting('am')` through the static `DateFormat`s in
 `lib/util/dates.dart` — real work, deferred; numbers and clock times
 (`14:35`) are locale-neutral already.
+
+## 12. Polish pass: theming, dark mode, empty states
+
+**Flutter concepts: `ColorScheme.fromSeed`, `themeMode` vs `darkTheme`,
+state-driven settings, `SystemChrome`.**
+
+`lib/theme/app_theme.dart` owns the identity: a deep teal seed
+(`0xFF006A60`) — financial, trustworthy, adjacent to teleBirr's green —
+with a warm amber `secondary` reserved as the **cash accent**, so cash
+and teleBirr are visually distinct in every list, chip and icon without
+touching the error color. Light and dark are both derived from the same
+seed (`ColorScheme.fromSeed` with explicit `brightness`), so containers,
+outlines and surfaces stay harmonized in both modes rather than
+inverted.
+
+Theme *mode* flows exactly like language: settings sheet (home app bar)
+→ `SettingsService.setThemeModeName` → `_TaxiPayApp.setState` →
+`MaterialApp(themeMode:)`. `MaterialApp` resolves `system`/`light`/
+`dark` against the OS setting; no `MediaQuery.platformBrightness`
+plumbing anywhere in app code.
+
+```dart
+theme: AppTheme.light(),
+darkTheme: AppTheme.dark(),
+themeMode: _themeMode, // system by default, user choice wins
+```
+
+`main()` also locks the app portrait — one-handed use in a car — via
+`SystemChrome.setPreferredOrientations`, the one-line platform hedge
+that saves a scramble of weird states on cheap devices.
+
+### Empty states were designed, not defaulted
+
+Each "nothing here" is a real composition: the live feed's waiting state
+explains what will happen (payments appear instantly) and offers the
+cash entry; the dashboard's empty card explains *why* it's empty and
+what fills it; onboarding never shows a bare screen. The general
+pattern: **say what's missing, say why it matters, offer the action
+that fixes it.**
+
+### The last fake-async footgun (for the road)
+
+The dark-mode launch test hung for a while: `AppDatabase.openInMemory()`
+was called *inside* the `testWidgets` body, and an ffi isolate
+round-trip awaited directly under fake async never completes — the test
+never even reached its first `print` (which itself was invisible,
+because the runner buffers stdout of unfinished tests). Rule, one final
+time: **open platform resources in `setUp`, settle real async with
+`runAsync`, close in `tearDown`.**
+
+---
+
+## Build order recap
+
+| Commit | What it taught |
+| --- | --- |
+| scaffold | project shape, dependency choices |
+| permissions onboarding | runtime permissions, Android restricted settings, battery exemption |
+| DB schema | SQLite via sqflite, integer cents, UNIQUE dedupe |
+| SMS parser | pure-Dart regex parsing, strict sender validation |
+| background handler | `@pragma('vm:entry-point')` background isolates |
+| reconciliation | inbox diffing as the correctness guarantee |
+| session logic | ChangeNotifier over a DB-as-truth model |
+| live session UI | Consumer/read split, bottom sheets, async-gap rules |
+| dashboard | SQL vs Dart aggregation, IndexedStack shells, fl_chart |
+| CSV export | pure formatting + injected side effects, share sheets |
+| localization | gen-l10n, ICU plurals, am-first fallbacks |
+| polish | seeded theming, dark mode, designed empty states |

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
@@ -11,6 +12,12 @@ import 'services/settings_service.dart';
 /// in-memory database with zero mocking gymnastics.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // One-handed use in a car: portrait only, keep the status bar readable
+  // over both theme variants.
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   final settings = SettingsService(await SharedPreferences.getInstance());
   final app = await AppDatabase.openDefault();
   runApp(TaxiPayApp(settings: settings, app: app));

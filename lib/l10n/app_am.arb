@@ -30,6 +30,11 @@
   "languageAmharic": "አማርኛ",
   "languageEnglish": "English",
 
+  "settingsTitle": "ቅንብሮች",
+  "themeSystem": "የስርዓቱን ይከተሉ",
+  "themeLight": "ብርሃናማ",
+  "themeDark": "ጨለማ",
+
   "dashboardTitle": "ሪፖርት",
   "periodDaily": "ዕለታዊ",
   "periodWeekly": "ሳምንታዊ",

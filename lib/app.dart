@@ -16,6 +16,7 @@ import 'services/csv_export_service.dart';
 import 'services/permissions_service.dart';
 import 'services/reconciliation_service.dart';
 import 'services/settings_service.dart';
+import 'theme/app_theme.dart';
 
 /// Root widget for Taxi Pay. Settings and the database are injected (created
 /// once in `main`), so the whole widget tree below is synchronous.
@@ -40,10 +41,14 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
   /// Explicit user language choice, or null = follow the system locale.
   String? _languageCode;
 
+  /// Saved theme mode; defaults to following the system.
+  ThemeMode _themeMode = ThemeMode.system;
+
   @override
   void initState() {
     super.initState();
     _languageCode = widget.settings.languageCode;
+    _themeMode = _themeModeFromName(widget.settings.themeModeName);
     WidgetsBinding.instance.addObserver(this);
     // Re-arm the SMS listener on every launch. Cheap and idempotent — and it
     // guarantees the background handler handle is (re)registered with the
@@ -51,6 +56,12 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
     SmsService.instance.start();
     _backgroundTasks.initialize();
   }
+
+  static ThemeMode _themeModeFromName(String? name) => switch (name) {
+        'light' => ThemeMode.light,
+        'dark' => ThemeMode.dark,
+        _ => ThemeMode.system,
+      };
 
   @override
   void dispose() {
@@ -85,11 +96,19 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
     setState(() => _languageCode = code);
   }
 
+  Future<void> _setThemeMode(ThemeMode mode) async {
+    await widget.settings.setThemeModeName(mode.name);
+    if (!mounted) return;
+    setState(() => _themeMode = mode);
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       onGenerateTitle: (context) => 'Taxi Pay',
-      theme: ThemeData(useMaterial3: true),
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: _themeMode,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       // Amharic first: an unsupported device locale resolves to am, not en —
       // Amharic is the primary language of this app.
@@ -114,6 +133,8 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
                     CsvExportService(PaymentRepository(widget.app)),
                 languageCode: _languageCode,
                 onLanguageChanged: _setLanguage,
+                themeMode: _themeMode,
+                onThemeModeChanged: _setThemeMode,
               ),
             )
           : OnboardingScreen(
@@ -132,11 +153,15 @@ class _HomeShell extends StatefulWidget {
     required this.exporter,
     required this.languageCode,
     required this.onLanguageChanged,
+    required this.themeMode,
+    required this.onThemeModeChanged,
   });
 
   final CsvExportService exporter;
   final String? languageCode;
   final Future<void> Function(String? code) onLanguageChanged;
+  final ThemeMode themeMode;
+  final Future<void> Function(ThemeMode mode) onThemeModeChanged;
 
   @override
   State<_HomeShell> createState() => _HomeShellState();
@@ -155,6 +180,8 @@ class _HomeShellState extends State<_HomeShell> {
           HomeScreen(
             languageCode: widget.languageCode,
             onLanguageChanged: widget.onLanguageChanged,
+            themeMode: widget.themeMode,
+            onThemeModeChanged: widget.onThemeModeChanged,
           ),
           DashboardScreen(exporter: widget.exporter),
         ],

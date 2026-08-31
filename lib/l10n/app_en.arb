@@ -30,6 +30,11 @@
   "languageAmharic": "አማርኛ",
   "languageEnglish": "English",
 
+  "settingsTitle": "Settings",
+  "themeSystem": "Follow system",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+
   "dashboardTitle": "Dashboard",
   "periodDaily": "Daily",
   "periodWeekly": "Weekly",

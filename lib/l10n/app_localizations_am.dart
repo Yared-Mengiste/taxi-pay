@@ -99,6 +99,18 @@ class AppLocalizationsAm extends AppLocalizations {
   String get languageEnglish => 'English';
 
   @override
+  String get settingsTitle => 'ቅንብሮች';
+
+  @override
+  String get themeSystem => 'የስርዓቱን ይከተሉ';
+
+  @override
+  String get themeLight => 'ብርሃናማ';
+
+  @override
+  String get themeDark => 'ጨለማ';
+
+  @override
   String get dashboardTitle => 'ሪፖርት';
 
   @override

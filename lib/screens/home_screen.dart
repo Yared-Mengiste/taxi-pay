@@ -15,10 +15,14 @@ class HomeScreen extends StatelessWidget {
     super.key,
     this.languageCode,
     this.onLanguageChanged,
+    this.themeMode,
+    this.onThemeModeChanged,
   });
 
   final String? languageCode;
   final Future<void> Function(String? code)? onLanguageChanged;
+  final ThemeMode? themeMode;
+  final Future<void> Function(ThemeMode mode)? onThemeModeChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -29,13 +33,15 @@ class HomeScreen extends StatelessWidget {
         actions: [
           if (onLanguageChanged != null)
             IconButton(
-              tooltip: context.l10n.languageTitle,
-              onPressed: () => showLanguageSheet(
+              tooltip: context.l10n.settingsTitle,
+              onPressed: () => showSettingsSheet(
                 context,
-                current: languageCode,
-                onSelected: onLanguageChanged!,
+                currentLanguage: languageCode,
+                onLanguageSelected: onLanguageChanged!,
+                currentTheme: themeMode ?? ThemeMode.system,
+                onThemeSelected: onThemeModeChanged!,
               ),
-              icon: const Icon(Icons.translate_rounded),
+              icon: const Icon(Icons.settings_rounded),
             ),
         ],
       ),
@@ -48,32 +54,35 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-/// Language picker — Amharic is the primary language, English secondary.
-Future<void> showLanguageSheet(
+/// Settings sheet: language (Amharic primary, English secondary) and
+/// theme mode. Small, focused — two choices, no settings screen needed.
+Future<void> showSettingsSheet(
   BuildContext context, {
-  required String? current,
-  required Future<void> Function(String? code) onSelected,
+  required String? currentLanguage,
+  required Future<void> Function(String? code) onLanguageSelected,
+  required ThemeMode currentTheme,
+  required Future<void> Function(ThemeMode mode) onThemeSelected,
 }) {
   final l10n = context.l10n;
   return showModalBottomSheet<void>(
     context: context,
     builder: (sheetContext) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Text(l10n.languageTitle,
+            child: Text(l10n.settingsTitle,
                 style: Theme.of(sheetContext).textTheme.titleMedium),
           ),
           RadioGroup<String?>(
-            groupValue: current,
+            groupValue: currentLanguage,
             onChanged: (value) {
               Navigator.of(sheetContext).pop();
-              onSelected(value);
+              onLanguageSelected(value);
             },
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               children: [
                 for (final (code, label) in [
                   (null, l10n.languageSystem),
@@ -82,6 +91,28 @@ Future<void> showLanguageSheet(
                 ])
                   RadioListTile<String?>(
                     value: code,
+                    title: Text(label),
+                  ),
+              ],
+            ),
+          ),
+          const Divider(),
+          RadioGroup<ThemeMode>(
+            groupValue: currentTheme,
+            onChanged: (value) {
+              if (value == null) return;
+              Navigator.of(sheetContext).pop();
+              onThemeSelected(value);
+            },
+            child: Column(
+              children: [
+                for (final (mode, label) in [
+                  (ThemeMode.system, l10n.themeSystem),
+                  (ThemeMode.light, l10n.themeLight),
+                  (ThemeMode.dark, l10n.themeDark),
+                ])
+                  RadioListTile<ThemeMode>(
+                    value: mode,
                     title: Text(label),
                   ),
               ],
