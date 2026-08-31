@@ -101,3 +101,89 @@ and reading persisted settings). Without it, any plugin call in `main()` throws
 initialized".
 
 ---
+
+## 2. Permissions + onboarding flow
+
+**Flutter concepts: `WidgetsBindingObserver` lifecycle, `FutureBuilder`,
+hand-written platform channels. `Android` concepts: restricted settings,
+Doze / battery-optimization exemptions.**
+
+This app cannot work at all without `RECEIVE_SMS` + `READ_SMS`, and it is
+*sideloaded* — which collides with an Android 13+ security rule: APKs
+installed from outside a store are put in a "restricted settings" state where
+**the system silently refuses to show runtime permission dialogs** until the
+user explicitly unlocks the app (App info → ⋮ → Allow restricted settings).
+A naive "call requestPermissions() and hope" flow would dead-end for every
+user. So the onboarding flow is a small state machine that reacts to what
+actually happened:
+
+```
+welcome ──▶ request SMS ── granted ──▶ battery-exemption step ──▶ home
+                │
+                └ denied ──▶ show "Allow restricted settings" instructions
+                             + button that opens the app's Settings page
+```
+
+### Key files
+
+- `android/app/src/main/AndroidManifest.xml` — declares the two SMS
+  permissions, `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`, and (importantly) the
+  plugin's manifest-declared `IncomingSmsReceiver`, which lets the OS wake the
+  app for every incoming SMS even when it is not running. `another_telephony`
+  deliberately does *not* declare this receiver itself — apps opt in.
+- `android/.../MainActivity.kt` — a **custom platform channel**
+  (`taxi_pay/android`) exposing three Android-only operations:
+  `isSmsPermissionGranted`, `requestIgnoreBatteryOptimizations`
+  (fires `ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`) and `openAppSettings`
+  (`ACTION_APPLICATION_DETAILS_SETTINGS`).
+- `lib/services/android_service.dart` — typed Dart wrapper over the channel.
+- `lib/services/permissions_service.dart` — combines the channel with
+  `another_telephony`'s `requestPhoneAndSmsPermissions` (which *does* show the
+  system dialog when allowed to).
+- `lib/screens/onboarding/onboarding_screen.dart` — the 3-step flow.
+
+### Why a custom channel?
+
+Dart plugins already existed for "request SMS permission" — but we needed a
+**check without prompting** and **battery-optimization intents**, and writing
+~40 lines of Kotlin teaches the platform-channel mechanism that everything
+else in Flutter's plugin ecosystem is built on:
+
+```kotlin
+MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "taxi_pay/android")
+    .setMethodCallHandler { call, result ->
+        when (call.method) {
+            "isSmsPermissionGranted" -> result.success(isSmsPermissionGranted())
+            ...
+        }
+    }
+```
+
+The Dart side (`android_service.dart`) is the mirror image:
+`MethodChannel('taxi_pay/android').invokeMethod<bool>(...)`.
+
+### Lifecycle observation
+
+After the user jumps to system Settings, we can't receive an event when they
+flip the toggle — so `OnboardingScreen` mixes in `WidgetsBindingObserver` and
+re-checks all permission states every time the app **resumes**:
+
+```dart
+@override
+void didChangeAppLifecycleState(AppLifecycleState state) {
+  if (state == AppLifecycleState.resumed) _refreshStatuses();
+}
+```
+
+This "re-check on resume" pattern returns later in the reconciliation step,
+for the same reason: external state can change while we're not looking.
+
+### Battery exemption, honestly
+
+`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` is the pragmatic choice for a
+sideloaded utility: without it, **Doze** defers background work (including our
+SMS broadcast handling latency) when the screen is off. The step is skippable
+because some ROM variants nag about it; SMS still gets captured, just less
+promptly — and step 6's reconciliation is designed to catch gaps.
+
+---
