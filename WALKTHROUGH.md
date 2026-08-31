@@ -260,3 +260,61 @@ local IDs, foreign keys reject orphan payments, and `dailyTotals` buckets by
 wall clock, not UTC.
 
 ---
+
+## 4. The teleBirr SMS parser + sender validation
+
+**Dart concepts: regular expressions, pure functions, table-driven unit
+tests. Domain concept: never trust message text.**
+
+teleBirr confirmation SMS come in (at least) two languages and several
+templates that have drifted over the years:
+
+> `You have received Birr 150.00 from ABEBE KEBEDE (0911***234). Your Telebirr
+> account balance is Birr 2,450.00. Transaction ID: 881234567890.`
+
+> `ከ ABEBE KEBEDE (0911***234) ብር 150.00 ተቀብለዋል። … ቀሪ ሂሳብ ብር 2,450.00 ነው።
+> የግብይት መለያ ቁጥር፦ 881234567890።`
+
+So the parser is not one rigid regex but a component scan
+(`lib/data/sms/telebirr_parser.dart`):
+
+1. **Received-ness gate** — the body must contain a received-signal
+   (`received`, `ተቀብለዋል`, `ደርሶብዎታል`, …). "You have *sent*" confirmations
+   and promo blasts die here.
+2. **Balance peel** — templates carry two amounts (payment + resulting
+   balance). The balance keyword (`balance` / `ቀሪ ሂሳብ`) is located, the
+   currency-attached number nearest *after* it is consumed as the balance and
+   blanked out of the working string.
+3. **Amount** — the first remaining currency-attached number
+   (`Birr 150.00`, `150.00 ETB`, `ብር 150.00` …), thousands-separator aware.
+4. **Transaction ID** — mandatory; without it we cannot dedupe, and a partial
+   parse would be worse than skipping.
+5. **Payer name / masked phone** — optional, `from NAME (09** ***234)` /
+   `ከ NAME (…)`.
+
+Everything is a `RegExp` module-level `final` (compiled once), and the whole
+function is **pure**: `String? → TelebirrPayment?`. No I/O, no plugin, no
+clock — which is exactly why it can be tested exhaustively in
+`test/telebirr_parser_test.dart` without a phone or a SIM. When a real
+message template doesn't parse, you paste it into that test file as a new
+case and fix the regex — the tests are the format catalog.
+
+### The anti-spoofing rule: validate the *address*, not the text
+
+```dart
+bool isFromTelebirr(String? address) {
+  if (address == null) return false;
+  final digits = address.replaceAll(RegExp(r'[^0-9]'), '');
+  return digits == '127';
+}
+```
+
+A scammer can write "You have received Birr 500.00…" in an SMS *body* from
+their own number; they cannot make the carrier deliver it *from* 127. So the
+capture pipeline (step 5) calls `isFromTelebirr(message.address)` on the PDU
+sender address before the body is ever parsed. Parsing and validation are
+separate functions on purpose — parsing answers "what does this say?",
+`isFromTelebirr` answers "who actually sent it?", and only the pair of them
+together means "this is real income".
+
+---
