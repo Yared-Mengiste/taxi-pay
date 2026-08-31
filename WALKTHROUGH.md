@@ -318,3 +318,63 @@ separate functions on purpose — parsing answers "what does this say?",
 together means "this is real income".
 
 ---
+
+## 5. Background SMS handler wired to the plugin
+
+**Flutter/Android concepts: background isolates, `@pragma('vm:entry-point')`,
+why Dart objects can't cross isolates, broadcast streams.**
+
+Android delivers incoming SMS as a system broadcast
+(`Telephony.SMS_RECEIVED`). The `another_telephony` plugin's manifest-declared
+receiver (which we opted into in step 2) catches it even for a dead app, then
+spins up a **background Flutter engine** and calls our Dart handler *on its
+own isolate*. Three consequences shaped this code:
+
+1. **Nothing can be shared.** The background isolate has no access to the UI's
+   memory — no providers, no open `Database` object. So all state it needs
+   must come from storage. That's why step 3 made the *database* the source of
+   truth: `captureSmsMessage` opens its own connection
+   (`AppDatabase.openDefault()` caches one per isolate), asks SQLite for the
+   active session, and writes.
+
+2. **The handler must survive tree-shaking.** The native side reaches the Dart
+   function only through a raw callback handle, so the compiler sees no
+   static reference to it. Without the pragma, release builds strip it and
+   background capture silently stops:
+
+   ```dart
+   @pragma('vm:entry-point')
+   Future<void> smsBackgroundHandler(SmsMessage message) async {
+     await captureSmsMessage(await AppDatabase.openDefault(),
+         address: message.address, body: message.body,
+         timestampMs: message.date ?? DateTime.now().millisecondsSinceEpoch);
+   }
+   ```
+
+3. **Double delivery is normal.** The plugin fires the foreground callback
+   and the background handler for the same SMS. Instead of coordinating them,
+   both call the same pipeline and the `UNIQUE(transaction_id)` constraint
+   absorbs the race — the second insert is a no-op.
+
+### The shared pipeline
+
+`lib/data/sms/sms_capture.dart` is one function used by every entry point
+(foreground, background, and step 6's reconciliation):
+
+```
+address == 127?  →  session active?  →  body parses?  →  tx id new?
+     no: drop          no: drop           no: drop        no: ignore
+```
+
+Payments that arrive *outside* an active session are deliberately not stored
+(v1 scope: the app tracks shift income, not full account history). The same
+function is trivially unit-tested with an in-memory database — including the
+spoof case: same convincing body, sender `0911223344`, nothing written.
+
+The foreground half (`sms_service.dart`) exposes captured payments as a
+**broadcast stream** (`Stream<Payment>`), so later any number of widgets can
+listen without polling. `start()` is idempotent and re-armed on every app
+launch — after a kill, only the native side remembers the callback handles,
+so re-calling `listenIncomingSms` re-registers everything.
+
+---

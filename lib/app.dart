@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'data/sms/sms_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'services/permissions_service.dart';
@@ -8,8 +9,8 @@ import 'services/settings_service.dart';
 
 /// Root widget for Taxi Pay.
 ///
-/// Owns the long-lived services (settings, permissions) and decides whether
-/// the first run shows the onboarding flow or the home screen.
+/// Owns the long-lived services (settings, permissions, SMS listener) and
+/// decides whether the first run shows the onboarding flow or the home screen.
 class TaxiPayApp extends StatefulWidget {
   const TaxiPayApp({super.key});
 
@@ -23,6 +24,10 @@ class _TaxiPayAppState extends State<TaxiPayApp> {
   @override
   void initState() {
     super.initState();
+    // Re-arm the SMS listener on every launch. Cheap and idempotent — and it
+    // guarantees the background handler handle is (re)registered with the
+    // native side even after the app was killed.
+    SmsService.instance.start();
     _settingsFuture =
         SharedPreferences.getInstance().then(SettingsService.new);
   }
