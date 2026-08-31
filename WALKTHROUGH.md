@@ -378,3 +378,68 @@ launch — after a kill, only the native side remembers the callback handles,
 so re-calling `listenIncomingSms` re-registers everything.
 
 ---
+
+## 6. Reconciliation query on resume (+ periodic WorkManager job)
+
+**Flutter/Android concepts: pull-based recovery vs push-based capture,
+content-provider queries, WorkManager, dependency injection of I/O.**
+
+Broadcasts are best-effort: Doze defers them, aggressive OEM battery savers
+drop them, and a killed process races with incoming SMS. But the SMS inbox
+is a durable log — the carrier's copy of every message is sitting in the
+`content://sms/inbox` content provider regardless of what our process was
+doing when it arrived. Reconciliation simply diffs that log against the
+database:
+
+```
+on app resume ──▶ active session? ──▶ query inbox: address = '127'
+                                         AND date >= session.startedAtMs
+                              ──▶ for each: captureSmsMessage (same pipeline!)
+```
+
+Because inserts go through the *same* `captureSmsMessage` pipeline with the
+same `UNIQUE(transaction_id)` constraint, reconciliation is **idempotent** —
+run it once or fifty times, the result converges (see
+`test/reconciliation_service_test.dart`, which proves a double run inserts
+nothing new). That property is what lets three independent writers (foreground
+callback, background isolate, reconciliation) share one pipeline with zero
+coordination.
+
+### Testable I/O via an injected fetcher
+
+The only untestable part is the actual platform query, so it's isolated
+behind a one-function typedef and injected:
+
+```dart
+typedef SmsFetcher = Future<List<InboxSmsItem>> Function(int sinceMs);
+```
+
+Production passes a wrapper around `Telephony.instance.getInboxSms(filter:
+SmsFilter.where(SmsColumn.ADDRESS).equals('127')
+    .and(SmsColumn.DATE).greaterThanOrEqualTo(...))` — a real SQL WHERE pushed
+down into the content provider, so non-teleBirr messages never even leave the
+provider. Tests pass a list literal. The diff logic itself (the part with
+bugs in it) runs against real SQLite.
+
+Note the sender filter appears at *both* levels — provider query and the
+strict `isFromTelebirr` gate in the capture pipeline. Defense in depth: even
+if the provider's address matching ever behaved unexpectedly (alpha senders,
+carrier quirks), the pipeline re-validates.
+
+### The resume hook and the WorkManager insurance policy
+
+`app.dart` observes the lifecycle (`didChangeAppLifecycleState` → `resumed`)
+and runs reconciliation with a re-entrancy guard, forwarding anything newly
+inserted onto the same `Stream<Payment>` the live listener uses — one stream,
+one place for the UI to listen. Failures (e.g. READ_SMS revoked) are caught:
+a resume path must never crash the app.
+
+On top of that, `BackgroundTaskService` registers a **periodic WorkManager
+task** (every 30 minutes, `ExistingPeriodicWorkPolicy.keep` so re-registering
+is safe) while a session is active — best-effort mid-shift reconciliation
+while the phone stays in the driver's pocket. Its dispatcher is another
+top-level `@pragma('vm:entry-point')` function running on its own engine,
+reusing `ReconciliationService` unchanged — the "everything through storage"
+architecture paying off a second time.
+
+---

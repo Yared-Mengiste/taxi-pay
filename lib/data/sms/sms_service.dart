@@ -31,6 +31,12 @@ class SmsService {
   /// Payments captured while the app is in the foreground.
   Stream<Payment> get capturedPayments => _controller.stream;
 
+  /// Re-emits payments inserted by a non-listener path (reconciliation) so
+  /// stream subscribers hear about them too.
+  void emitCaptured(Payment payment) {
+    if (!_controller.isClosed) _controller.add(payment);
+  }
+
   Future<void> start() async {
     if (_started || !Platform.isAndroid) return;
     _started = true;
