@@ -720,13 +720,25 @@ English ARB declares categories, the Amharic one declares only
 "paymentsCount": "{count, plural, other{{count} ክፍያ}}"
 ```
 
-### Known v1 limitation (on purpose)
+### Localized dates (the limitation, closed)
 
-Date labels on the payment feed and chart axes (`Mon`, `Aug 31`) stay
-Gregorian/English. Localizing them means threading `intl`'s
-`initializeDateFormatting('am')` through the static `DateFormat`s in
-`lib/util/dates.dart` — real work, deferred; numbers and clock times
-(`14:35`) are locale-neutral already.
+v1 originally shipped Gregorian/English date labels (`Mon`, `Aug 31`)
+on the payment feed and chart axes. Closing that meant two things:
+
+- `await initializeDateFormatting()` in `main()` before `runApp` —
+  intl keeps date symbols per-locale on disk, and loading them lazily
+  means the *first* localized `DateFormat` call would throw mid-frame.
+- Locale threading instead of static formatters. `lib/util/dates.dart`
+  now keys its `DateFormat` cache by `pattern|locale`, and every
+  formatter takes `locale:` — widgets pass
+  `Localizations.maybeLocaleOf(context)?.toString()` down. So the
+  dashboard's weekday axis reads `ሰኞ` when the app is Amharic and `Mon`
+  in English, from the same widget code.
+
+Numbers and clock times (`14:35`) stay locale-neutral by design —
+Ethiopian taxi fare negotiation runs on western-Arabic digits in
+practice, and mixing Ethiopic numerals into money would hurt
+scannability more than it helps authenticity.
 
 ## 12. Polish pass: theming, dark mode, empty states
 

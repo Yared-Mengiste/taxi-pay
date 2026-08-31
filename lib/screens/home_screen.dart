@@ -270,6 +270,7 @@ class _LiveSessionView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final locale = Localizations.maybeLocaleOf(context)?.toString();
     final scheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -289,8 +290,9 @@ class _LiveSessionView extends StatelessWidget {
                           size: 16, color: scheme.onPrimaryContainer),
                       const SizedBox(width: 6),
                       Text(
-                        l10n.liveSince(
-                            formatClock(session.activeSession!.startedAtMs)),
+                        l10n.liveSince(formatClock(
+                            session.activeSession!.startedAtMs,
+                            locale: locale)),
                         style: Theme.of(context).textTheme.labelMedium?.copyWith(
                               color: scheme.onPrimaryContainer,
                               letterSpacing: 1.2,

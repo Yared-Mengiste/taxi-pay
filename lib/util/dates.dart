@@ -1,22 +1,29 @@
 import 'package:intl/intl.dart';
 
-final DateFormat _clock = DateFormat('HH:mm');
-final DateFormat _dayTime = DateFormat('EEE, MMM d · HH:mm');
-final DateFormat _day = DateFormat('EEE, MMM d');
+/// Formatted with the widget tree's locale (see [Localizations.localeOf]),
+/// e.g. `14:35` — clock times are locale-neutral digits, but the pattern
+/// cache is keyed by locale anyway so any locale-specific pattern just
+/// works.
+final _cache = <String, DateFormat>{};
+
+DateFormat _fmt(String pattern, String? locale) => _cache.putIfAbsent(
+      '$pattern|${locale ?? 'default'}',
+      () => DateFormat(pattern, locale),
+    );
 
 /// `14:35` — payment times on the live list.
-String formatClock(int ms) =>
-    _clock.format(DateTime.fromMillisecondsSinceEpoch(ms));
+String formatClock(int ms, {String? locale}) =>
+    _fmt('HH:mm', locale).format(DateTime.fromMillisecondsSinceEpoch(ms));
 
 /// `Mon, Aug 31 · 14:35` — session start times.
-String formatDayTime(int ms) =>
-    _dayTime.format(DateTime.fromMillisecondsSinceEpoch(ms));
+String formatDayTime(int ms, {String? locale}) => _fmt('EEE, MMM d · HH:mm', locale)
+    .format(DateTime.fromMillisecondsSinceEpoch(ms));
 
 /// `Mon, Aug 31` — dashboard labels.
-String formatDay(int ms) =>
-    _day.format(DateTime.fromMillisecondsSinceEpoch(ms));
+String formatDay(int ms, {String? locale}) =>
+    _fmt('EEE, MMM d', locale).format(DateTime.fromMillisecondsSinceEpoch(ms));
 
-/// `2h 14m` / `48m` / `45s` — session durations.
+/// `2h 14m` / `48m` / `45s` — session durations (locale-neutral).
 String formatDuration(int startMs, int endMs) {
   final s = (endMs - startMs) ~/ 1000;
   if (s < 60) return '${s}s';
@@ -48,3 +55,13 @@ DateTime addMonths(DateTime d, int n) {
   final totalMonths = d.month - 1 + n;
   return DateTime(d.year + (totalMonths / 12).floor(), totalMonths % 12 + 1);
 }
+
+/// Weekday axis labels for the daily chart: `ሰኞ` under Amharic, `Mon`
+/// under English. Full-width names keep single-letter English
+/// abbreviations out of a 7-bar chart.
+String weekdayLabel(DateTime start, String? locale) =>
+    _fmt('E', locale).format(start);
+
+/// Month axis labels for the monthly chart: `ኦገስ` / `Aug`.
+String monthLabel(DateTime start, String? locale) =>
+    _fmt('MMM', locale).format(start);

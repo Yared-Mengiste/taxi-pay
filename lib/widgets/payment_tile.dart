@@ -14,6 +14,8 @@ class PaymentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final locale = Localizations.maybeLocaleOf(context)?.toString();
+    final time = formatClock(payment.smsTimestampMs, locale: locale);
     final isCash = payment.method == PaymentMethod.cash;
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -38,8 +40,8 @@ class PaymentTile extends StatelessWidget {
       ),
       subtitle: Text(
         isCash
-            ? formatClock(payment.smsTimestampMs)
-            : '${payment.payerPhone ?? '•••'} · ${formatClock(payment.smsTimestampMs)}',
+            ? time
+            : '${payment.payerPhone ?? '•••'} · $time',
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),

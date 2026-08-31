@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
@@ -18,6 +19,9 @@ Future<void> main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+  // Loads symbols for every locale intl knows (including am) so DateFormat
+  // never throws mid-frame when a widget first asks for Amharic labels.
+  await initializeDateFormatting();
   final settings = SettingsService(await SharedPreferences.getInstance());
   final app = await AppDatabase.openDefault();
   runApp(TaxiPayApp(settings: settings, app: app));

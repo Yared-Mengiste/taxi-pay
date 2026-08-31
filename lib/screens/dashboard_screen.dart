@@ -7,6 +7,7 @@ import '../l10n/l10n.dart';
 import '../models/payment.dart';
 import '../providers/dashboard_provider.dart';
 import '../services/csv_export_service.dart';
+import '../util/dates.dart';
 import '../util/money.dart';
 
 /// Revenue over time: period toggle, summary numbers, one bar per
@@ -283,15 +284,19 @@ class _RevenueBarChart extends StatelessWidget {
   final double maxYBirr;
   final Color barColor;
 
-  String _bottomLabel(DateTime start) => switch (period) {
-        DashboardPeriod.day => DateFormat('E').format(start), // Mon, Tue…
-        DashboardPeriod.week => DateFormat('M/d').format(start), // Monday
-        DashboardPeriod.month => DateFormat('MMM').format(start), // Jan…
+  String _bottomLabel(DateTime start, String? locale) => switch (period) {
+        DashboardPeriod.day => weekdayLabel(start, locale), // ሰኞ / Mon
+        DashboardPeriod.week =>
+          _mdFormat.format(start), // Monday's date, digits only
+        DashboardPeriod.month => monthLabel(start, locale), // ኦገስ / Aug
       };
+
+  static final _mdFormat = DateFormat('M/d');
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final locale = Localizations.maybeLocaleOf(context)?.toString();
     return BarChart(
       BarChartData(
         alignment: BarChartAlignment.spaceAround,
@@ -336,7 +341,7 @@ class _RevenueBarChart extends StatelessWidget {
                 return SideTitleWidget(
                   meta: meta,
                   child: Text(
-                    _bottomLabel(buckets[index].start),
+                    _bottomLabel(buckets[index].start, locale),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),
