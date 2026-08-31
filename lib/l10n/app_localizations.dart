@@ -392,6 +392,72 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{Exported {count} payment as CSV.} other{Exported {count} payments as CSV.}}'**
   String exportDone(num count);
 
+  /// No description provided for @exportRangeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Export which period?'**
+  String get exportRangeTitle;
+
+  /// No description provided for @exportRangeThisWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get exportRangeThisWeek;
+
+  /// No description provided for @exportRangeLastWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Last week'**
+  String get exportRangeLastWeek;
+
+  /// No description provided for @exportRangeThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get exportRangeThisMonth;
+
+  /// No description provided for @exportRangeLastMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Last month'**
+  String get exportRangeLastMonth;
+
+  /// No description provided for @exportRangeLast7Days.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 days'**
+  String get exportRangeLast7Days;
+
+  /// No description provided for @exportRangeLast30Days.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 30 days'**
+  String get exportRangeLast30Days;
+
+  /// No description provided for @exportRangeAllTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything'**
+  String get exportRangeAllTime;
+
+  /// No description provided for @exportRangeCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom range…'**
+  String get exportRangeCustom;
+
+  /// No description provided for @exportPickStartDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start date'**
+  String get exportPickStartDate;
+
+  /// No description provided for @exportPickEndDate.
+  ///
+  /// In en, this message translates to:
+  /// **'End date'**
+  String get exportPickEndDate;
+
   /// No description provided for @onbWelcomeTitle.
   ///
   /// In en, this message translates to:

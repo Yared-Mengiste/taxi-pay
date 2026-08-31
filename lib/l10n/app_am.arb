@@ -64,6 +64,18 @@
   "exportEmpty": "በዚህ ጊዜ ለማንሳት ክፍያ የለም።",
   "exportDone": "{count, plural, other{{count} ክፍያዎችን በCSV ላከ።}}",
 
+  "exportRangeTitle": "የትኛውን ጊዜ ይላኩ?",
+  "exportRangeThisWeek": "ይህ ሳምንት",
+  "exportRangeLastWeek": "ያለፈው ሳምንት",
+  "exportRangeLastMonth": "ያለፈው ወር",
+  "exportRangeThisMonth": "ይህ ወር",
+  "exportRangeLast7Days": "ያለፉት 7 ቀናት",
+  "exportRangeLast30Days": "ያለፉት 30 ቀናት",
+  "exportRangeAllTime": "ሁሉም",
+  "exportRangeCustom": "በራስ የተመረጠ ጊዜ…",
+  "exportPickStartDate": "የመጀመሪያ ቀን",
+  "exportPickEndDate": "የመጨረሻ ቀን",
+
   "onbWelcomeTitle": "እንኳን ወደ ታክሲ ፔይ በደህና መጡ",
   "onbWelcomeBody": "በስራ ጊዜ የተላኩትን የተሌቢር ክፍያዎች እና የጥሬ ገንዘብ ክፍያዎችዎን በአንድነት ይከታተሉ — በዕለት፣ በሳምንት እና በወር ድምሮች።",
   "onbGetStarted": "ጀምር",

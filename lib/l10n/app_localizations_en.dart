@@ -191,6 +191,39 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get exportRangeTitle => 'Export which period?';
+
+  @override
+  String get exportRangeThisWeek => 'This week';
+
+  @override
+  String get exportRangeLastWeek => 'Last week';
+
+  @override
+  String get exportRangeThisMonth => 'This month';
+
+  @override
+  String get exportRangeLastMonth => 'Last month';
+
+  @override
+  String get exportRangeLast7Days => 'Last 7 days';
+
+  @override
+  String get exportRangeLast30Days => 'Last 30 days';
+
+  @override
+  String get exportRangeAllTime => 'Everything';
+
+  @override
+  String get exportRangeCustom => 'Custom range…';
+
+  @override
+  String get exportPickStartDate => 'Start date';
+
+  @override
+  String get exportPickEndDate => 'End date';
+
+  @override
   String get onbWelcomeTitle => 'Welcome to Taxi Pay';
 
   @override

@@ -186,6 +186,39 @@ class AppLocalizationsAm extends AppLocalizations {
   }
 
   @override
+  String get exportRangeTitle => 'የትኛውን ጊዜ ይላኩ?';
+
+  @override
+  String get exportRangeThisWeek => 'ይህ ሳምንት';
+
+  @override
+  String get exportRangeLastWeek => 'ያለፈው ሳምንት';
+
+  @override
+  String get exportRangeThisMonth => 'ይህ ወር';
+
+  @override
+  String get exportRangeLastMonth => 'ያለፈው ወር';
+
+  @override
+  String get exportRangeLast7Days => 'ያለፉት 7 ቀናት';
+
+  @override
+  String get exportRangeLast30Days => 'ያለፉት 30 ቀናት';
+
+  @override
+  String get exportRangeAllTime => 'ሁሉም';
+
+  @override
+  String get exportRangeCustom => 'በራስ የተመረጠ ጊዜ…';
+
+  @override
+  String get exportPickStartDate => 'የመጀመሪያ ቀን';
+
+  @override
+  String get exportPickEndDate => 'የመጨረሻ ቀን';
+
+  @override
   String get onbWelcomeTitle => 'እንኳን ወደ ታክሲ ፔይ በደህና መጡ';
 
   @override

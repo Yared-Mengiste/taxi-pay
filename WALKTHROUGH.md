@@ -904,6 +904,39 @@ half-closed databases.
 
 ---
 
+## 16. CSV export with a date-range picker
+
+**Flutter concepts: enum-driven UI, records as lightweight return
+types, dialogs over bottom sheets.**
+
+Step 10's export button exported "whatever window the chart showed" —
+correct, but not what reconciliation needs: matching teleBirr's
+statement means exporting *that calendar month*, not the trailing 7
+days. The fix splits cleanly along the app's established pure/impure
+seam:
+
+- **`exportWindowFor(preset, now)`** in `util/dates.dart` — pure
+  calendar math returning a Dart 3 record `(DateTime, DateTime)`. Same
+  conventions as the dashboard (Monday weeks, local midnights,
+  `[from, to)` windows), so the test suite pins invariants once and
+  both features obey them: last-month across a year boundary
+  (`DateTime(2027, 1, 15)` → `[2026-12-01, 2027-01-01)`), rolling
+  windows sized inclusively ("last 7 days" = today + the 6 before it),
+  `allTime` starting at the epoch.
+- **`showExportRangeSheet`** — the impure half: draws one `ListTile`
+  per enum value (subtitle shows the concrete dates it will export —
+  never make a user compute date math in their head), plus a "Custom
+  range…" entry chaining two `showDatePicker` dialogs.
+
+Two details worth keeping: the custom range is **end-day inclusive**
+(converted to an exclusive upper bound inside the picker — users think
+"Aug 25 to Aug 31", not half-open intervals), and a reversed selection
+is silently normalized instead of rejected — the intent is obvious.
+And `_pickCustomRange` captures `Navigator.of` and the l10n strings
+*before* its awaits, the async-gap rule from step 8 applied to dialogs.
+
+---
+
 ## Build order recap
 
 | Commit | What it taught |

@@ -64,6 +64,18 @@
   "exportEmpty": "No payments in this period to export.",
   "exportDone": "{count, plural, =1{Exported {count} payment as CSV.} other{Exported {count} payments as CSV.}}",
 
+  "exportRangeTitle": "Export which period?",
+  "exportRangeThisWeek": "This week",
+  "exportRangeLastWeek": "Last week",
+  "exportRangeThisMonth": "This month",
+  "exportRangeLastMonth": "Last month",
+  "exportRangeLast7Days": "Last 7 days",
+  "exportRangeLast30Days": "Last 30 days",
+  "exportRangeAllTime": "Everything",
+  "exportRangeCustom": "Custom range…",
+  "exportPickStartDate": "Start date",
+  "exportPickEndDate": "End date",
+
   "onbWelcomeTitle": "Welcome to Taxi Pay",
   "onbWelcomeBody": "Track the teleBirr payments passengers send you during a shift, plus your cash fares — with daily, weekly and monthly totals.",
   "onbGetStarted": "Get started",

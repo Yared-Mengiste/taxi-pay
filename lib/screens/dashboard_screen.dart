@@ -9,6 +9,7 @@ import '../providers/dashboard_provider.dart';
 import '../services/csv_export_service.dart';
 import '../util/dates.dart';
 import '../util/money.dart';
+import '../widgets/export_range_sheet.dart';
 
 /// Revenue over time: period toggle, summary numbers, one bar per
 /// day/week/month. Read-only — everything is aggregated from the DB.
@@ -62,15 +63,20 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
+  /// Export flow: pick a window (preset or custom), then share it as CSV.
+  /// The picker replaced the old "export whatever is on screen" behavior —
+  /// reconciliation against a monthly teleBirr statement needs *that*
+  /// month, not whatever the chart happened to show.
   Future<void> _export(BuildContext context) async {
-    final dashboard = context.read<DashboardProvider>();
     final messenger = ScaffoldMessenger.of(context);
     // Strings captured before the await — no context use across the gap.
     final emptyMessage = context.l10n.exportEmpty;
     final doneMessage = context.l10n.exportDone;
+    final range = await showExportRangeSheet(context);
+    if (range == null || !context.mounted) return;
     final result = await exporter.exportRange(
-      from: dashboard.windowFrom,
-      to: dashboard.windowTo,
+      from: range.$1,
+      to: range.$2,
     );
     messenger.showSnackBar(SnackBar(
       content: Text(result.isEmpty

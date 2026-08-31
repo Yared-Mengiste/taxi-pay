@@ -65,3 +65,57 @@ String weekdayLabel(DateTime start, String? locale) =>
 /// Month axis labels for the monthly chart: `ኦገስ` / `Aug`.
 String monthLabel(DateTime start, String? locale) =>
     _fmt('MMM', locale).format(start);
+
+// ---------------------------------------------------------------------------
+// Export windows — the periods a driver actually reconciles against
+// (teleBirr statements are monthly; family conversations are weekly).
+// Pure calendar math, same rules as the dashboard: Monday-anchored weeks,
+// local midnights, [from, to) intervals.
+// ---------------------------------------------------------------------------
+
+/// Preset date ranges offered by the CSV export sheet.
+enum ExportRangePreset {
+  thisWeek,
+  lastWeek,
+  thisMonth,
+  lastMonth,
+  last7Days,
+  last30Days,
+
+  /// The whole history stored on this phone.
+  allTime,
+}
+
+/// The `[from, to)` window a preset covers around [now].
+(DateTime, DateTime) exportWindowFor(ExportRangePreset preset, DateTime now) {
+  switch (preset) {
+    case ExportRangePreset.thisWeek:
+      final from = startOfWeek(now);
+      return (from, from.add(const Duration(days: 7)));
+    case ExportRangePreset.lastWeek:
+      final from = startOfWeek(now).subtract(const Duration(days: 7));
+      return (from, from.add(const Duration(days: 7)));
+    case ExportRangePreset.thisMonth:
+      final from = startOfMonth(now);
+      return (from, addMonths(from, 1));
+    case ExportRangePreset.lastMonth:
+      final from = addMonths(startOfMonth(now), -1);
+      return (from, addMonths(from, 1));
+    case ExportRangePreset.last7Days:
+      return (
+        startOfDay(now).subtract(const Duration(days: 6)),
+        startOfDay(now).add(const Duration(days: 1)),
+      );
+    case ExportRangePreset.last30Days:
+      return (
+        startOfDay(now).subtract(const Duration(days: 29)),
+        startOfDay(now).add(const Duration(days: 1)),
+      );
+    case ExportRangePreset.allTime:
+      // Epoch to end of today — every row the database has.
+      return (
+        DateTime.fromMillisecondsSinceEpoch(0),
+        startOfDay(now).add(const Duration(days: 1)),
+      );
+  }
+}

@@ -55,6 +55,56 @@ void main() {
   });
 
 
+  group('export windows', () {
+    // A Wednesday, mid-afternoon — time-of-day must not leak into windows.
+    final now = DateTime(2026, 8, 19, 15, 42);
+    final monday = DateTime(2026, 8, 17);
+
+    (DateTime, DateTime) window(ExportRangePreset p) =>
+        exportWindowFor(p, now);
+
+    test('this week is Monday-anchored and 7 days wide', () {
+      final (from, to) = window(ExportRangePreset.thisWeek);
+      expect(from, monday);
+      expect(to.difference(from).inDays, 7);
+      expect(to.isAfter(now), isTrue);
+    });
+
+    test('last week is the 7 days before this one', () {
+      final (from, to) = window(ExportRangePreset.lastWeek);
+      expect(from, DateTime(2026, 8, 10));
+      expect(to, monday);
+    });
+
+    test('this month runs from the 1st to the 1st', () {
+      final (from, to) = window(ExportRangePreset.thisMonth);
+      expect(from, DateTime(2026, 8, 1));
+      expect(to, DateTime(2026, 9, 1));
+    });
+
+    test('last month crosses year boundaries correctly', () {
+      final (from, to) =
+          exportWindowFor(ExportRangePreset.lastMonth, DateTime(2027, 1, 15));
+      expect(from, DateTime(2026, 12, 1));
+      expect(to, DateTime(2027, 1, 1));
+    });
+
+    test('rolling windows include today and are inclusive-sized', () {
+      final (from7, to7) = window(ExportRangePreset.last7Days);
+      expect(to7.difference(from7).inDays, 7); // today + the 6 before it
+      expect(from7, DateTime(2026, 8, 13));
+
+      final (from30, to30) = window(ExportRangePreset.last30Days);
+      expect(to30.difference(from30).inDays, 30);
+    });
+
+    test('all time starts at the epoch and ends tomorrow', () {
+      final (from, to) = window(ExportRangePreset.allTime);
+      expect(from, DateTime.fromMillisecondsSinceEpoch(0));
+      expect(to, DateTime(2026, 8, 20));
+    });
+  });
+
   group('localized labels', () {
     final monday = DateTime(2026, 8, 31); // a Monday
     final august = DateTime(2026, 8, 1);
