@@ -638,3 +638,39 @@ await tester.pumpAndSettle();
 `runAsync` suspends the fake clock and lets real async I/O finish.
 Rule of thumb: pump-only tests for layout, `runAsync` whenever a
 provider's constructor touches ffi/platform channels.
+
+## 10. CSV export
+
+**Flutter concepts: pure-function testing, dependency injection of *side
+effects*, platform share sheets (`share_plus`), file I/O in the cache
+directory.**
+
+Export follows the same split as the parser: **formatting is a pure
+function** (`lib/util/csv.dart` — RFC 4180 escaping, one row per payment,
+amounts as birr decimals) **and only the I/O is a service**
+(`lib/services/csv_export_service.dart`):
+
+```dart
+final exporter = CsvExportService(
+  payments,
+  onShareFile: ...,   // injectable side effect
+  cacheDir: ...,      // injectable, too — getTemporaryDirectory() is a
+);                    // platform channel and explodes in unit tests
+```
+
+Tests therefore assert on *bytes on disk* with zero platform doubles.
+
+Two details that cost people real afternoons:
+
+- **The UTF-8 BOM.** The file is written as `\uFEFF` + CSV. Without the
+  BOM, Excel guesses a legacy 8-bit encoding and Amharic payer names
+  open as mojibake. (Fun fact learned here: Dart's `readAsString()`
+  strips a leading BOM — assert on `readAsBytes()` if you test this.)
+- **`SharePlus.instance.share(ShareParams(files: [...]))`** is the
+  current share_plus API; the older `Share.shareXFiles` still exists but
+  is deprecated. Version churn in plus_plugins is real — keep plugin
+  calls in one small service, not scattered through widgets.
+
+The dashboard's export button exports **exactly the window on screen**
+(`DashboardProvider.windowFrom/windowTo`), so "what I see is what I
+send" — the summary card, chart and CSV can never disagree.

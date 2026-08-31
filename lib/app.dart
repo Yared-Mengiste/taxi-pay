@@ -10,6 +10,7 @@ import 'screens/dashboard_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'services/background_task_service.dart';
+import 'services/csv_export_service.dart';
 import 'services/permissions_service.dart';
 import 'services/reconciliation_service.dart';
 import 'services/settings_service.dart';
@@ -91,7 +92,10 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
                       DashboardProvider(PaymentRepository(widget.app))..load(),
                 ),
               ],
-              child: const _HomeShell(),
+              child: _HomeShell(
+                exporter:
+                    CsvExportService(PaymentRepository(widget.app)),
+              ),
             )
           : OnboardingScreen(
               settings: widget.settings,
@@ -105,7 +109,9 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
 /// widget, so switching tabs never destroys session state, and an
 /// [IndexedStack] keeps both trees alive (scroll position, chart state).
 class _HomeShell extends StatefulWidget {
-  const _HomeShell();
+  const _HomeShell({required this.exporter});
+
+  final CsvExportService exporter;
 
   @override
   State<_HomeShell> createState() => _HomeShellState();
@@ -114,14 +120,15 @@ class _HomeShell extends StatefulWidget {
 class _HomeShellState extends State<_HomeShell> {
   int _index = 0;
 
-  static const _screens = [HomeScreen(), DashboardScreen()];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
         index: _index,
-        children: _screens,
+        children: [
+          const HomeScreen(),
+          DashboardScreen(exporter: widget.exporter),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
@@ -129,7 +136,7 @@ class _HomeShellState extends State<_HomeShell> {
           setState(() => _index = index);
           // Coming back to the dashboard should reflect payments captured
           // while the user was on the session tab.
-          if (_screens[index] is DashboardScreen) {
+          if (index == 1) {
             context.read<DashboardProvider>().reload();
           }
         },

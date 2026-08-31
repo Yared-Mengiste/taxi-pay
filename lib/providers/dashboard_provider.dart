@@ -68,6 +68,13 @@ class DashboardProvider extends ChangeNotifier {
 
   bool get hasRevenue => totalCents > 0;
 
+  /// The window currently on screen — what an "Export CSV" should contain.
+  /// (Recomputed rather than cached: pure, cheap, always in sync with
+  /// [period] even if reload hasn't finished.)
+  DateTime get windowFrom =>
+      _bucketStarts(DateTime.now()).first;
+  DateTime get windowTo => _endOf(DateTime.now());
+
   Future<void> setPeriod(DashboardPeriod period) {
     if (period == _period) return Future.value();
     _period = period;

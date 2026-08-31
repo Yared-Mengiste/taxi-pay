@@ -5,12 +5,15 @@ import 'package:provider/provider.dart';
 
 import '../models/payment.dart';
 import '../providers/dashboard_provider.dart';
+import '../services/csv_export_service.dart';
 import '../util/money.dart';
 
 /// Revenue over time: period toggle, summary numbers, one bar per
 /// day/week/month. Read-only — everything is aggregated from the DB.
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+  const DashboardScreen({super.key, required this.exporter});
+
+  final CsvExportService exporter;
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +21,13 @@ class DashboardScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Dashboard'),
         centerTitle: false,
+        actions: [
+          IconButton(
+            tooltip: 'Export CSV',
+            onPressed: () => _export(context),
+            icon: const Icon(Icons.ios_share_rounded),
+          ),
+        ],
       ),
       body: Consumer<DashboardProvider>(
         builder: (context, dashboard, _) {
@@ -48,6 +58,20 @@ class DashboardScreen extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Future<void> _export(BuildContext context) async {
+    final dashboard = context.read<DashboardProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    final result = await exporter.exportRange(
+      from: dashboard.windowFrom,
+      to: dashboard.windowTo,
+    );
+    messenger.showSnackBar(SnackBar(
+      content: Text(result.isEmpty
+          ? 'No payments in this period to export.'
+          : 'Exported ${result.paymentCount} payments as CSV.'),
+    ));
   }
 }
 
