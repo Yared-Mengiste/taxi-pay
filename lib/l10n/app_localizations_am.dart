@@ -62,6 +62,11 @@ class AppLocalizationsAm extends AppLocalizations {
   String get telebirrPayment => 'የተሌቢር ክፍያ';
 
   @override
+  String walletBalance(Object amount) {
+    return 'ቀሪ ሂሳብ፦ $amount';
+  }
+
+  @override
   String get cashSheetTitle => 'የጥሬ ገንዘብ ክፍያ ያስገቡ';
 
   @override

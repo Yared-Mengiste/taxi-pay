@@ -14,6 +14,12 @@
   "actionStop": "አቁም",
   "cashFare": "የጥሬ ገንዘብ ክፍያ",
   "telebirrPayment": "የተሌቢር ክፍያ",
+  "walletBalance": "ቀሪ ሂሳብ፦ {amount}",
+  "@walletBalance": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
 
   "cashSheetTitle": "የጥሬ ገንዘብ ክፍያ ያስገቡ",
   "cashSheetBody": "የጥሬ ገንዘብ ክፍያዎች ከተሌቢር ክፍያዎች ጋር በተመሳሳይ ድምር ይታሰባሉ።",

@@ -67,6 +67,7 @@ void main() {
       sessionId: provider.activeSession!.id,
       method: PaymentMethod.telebirr,
       amountCents: 15000,
+      balanceAfterCents: 266800,
       smsTimestampMs: 1000,
       createdAtMs: 1000,
     ));
@@ -75,6 +76,7 @@ void main() {
       sessionId: provider.activeSession!.id,
       method: PaymentMethod.telebirr,
       amountCents: 15000,
+      balanceAfterCents: 266800,
       smsTimestampMs: 1000,
       createdAtMs: 1000,
     ));
@@ -84,6 +86,8 @@ void main() {
 
     expect(provider.paymentCount, 1);
     expect(provider.totalCents, 15000);
+    // The wallet balance rides along on every reload.
+    expect(provider.walletBalanceCents, 266800);
   });
 
   test('cold start recovers an active session from the DB', () async {

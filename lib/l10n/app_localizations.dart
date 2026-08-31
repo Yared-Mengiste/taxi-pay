@@ -170,6 +170,12 @@ abstract class AppLocalizations {
   /// **'teleBirr payment'**
   String get telebirrPayment;
 
+  /// No description provided for @walletBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet: {amount}'**
+  String walletBalance(Object amount);
+
   /// No description provided for @cashSheetTitle.
   ///
   /// In en, this message translates to:

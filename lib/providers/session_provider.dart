@@ -37,6 +37,7 @@ class SessionProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   Session? _activeSession;
   List<Payment> _payments = [];
+  int? _walletBalanceCents;
 
   Session? _lastEndedSession;
   List<Payment> _lastEndedPayments = const [];
@@ -47,6 +48,11 @@ class SessionProvider extends ChangeNotifier with WidgetsBindingObserver {
   Session? get activeSession => _activeSession;
 
   bool get isRunning => _activeSession != null;
+
+  /// Latest teleBirr wallet balance seen in a captured SMS, or null before
+  /// the first teleBirr payment. Refreshed with every reload because any
+  /// captured payment may carry a newer balance.
+  int? get walletBalanceCents => _walletBalanceCents;
 
   /// Payments of the running session, newest first (unmodifiable view).
   List<Payment> get payments => List.unmodifiable(_payments);
@@ -110,6 +116,7 @@ class SessionProvider extends ChangeNotifier with WidgetsBindingObserver {
     _payments = _activeSession == null
         ? []
         : await _paymentsRepo.paymentsForSession(_activeSession!.id);
+    _walletBalanceCents = await _paymentsRepo.latestTelebirrBalanceCents();
     _notify();
   }
 

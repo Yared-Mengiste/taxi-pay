@@ -149,6 +149,42 @@ class _IdleView extends StatelessWidget {
           ),
         const SizedBox(height: 24),
         _StartButton(onPressed: () => context.read<SessionProvider>().start()),
+        if (session.walletBalanceCents != null) ...[
+          const SizedBox(height: 16),
+          _WalletBadge(cents: session.walletBalanceCents!),
+        ],
+      ],
+    );
+  }
+}
+
+/// "Wallet: 26.68" — the teleBirr balance from the newest captured SMS.
+/// Purely informational; it goes stale the moment the driver pays for
+/// something outside this app, so it reads as a hint, not ledger truth.
+class _WalletBadge extends StatelessWidget {
+  const _WalletBadge({required this.cents, this.color});
+
+  final int cents;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final effectiveColor = color ?? scheme.onSurfaceVariant;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.account_balance_wallet_rounded,
+            size: 16, color: effectiveColor),
+        const SizedBox(width: 6),
+        Text(
+          context.l10n.walletBalance(formatBirr(cents)),
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: effectiveColor,
+                fontWeight: FontWeight.w600,
+              ),
+        ),
       ],
     );
   }
@@ -315,6 +351,13 @@ class _LiveSessionView extends StatelessWidget {
                           color: scheme.onPrimaryContainer,
                         ),
                   ),
+                  if (session.walletBalanceCents != null) ...[
+                    const SizedBox(height: 4),
+                    _WalletBadge(
+                      cents: session.walletBalanceCents!,
+                      color: scheme.onPrimaryContainer,
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   Row(
                     children: [

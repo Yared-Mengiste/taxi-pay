@@ -132,6 +132,20 @@ class PaymentRepository {
     return rows.first['total'] as int;
   }
 
+  /// The teleBirr wallet balance after the most recent captured teleBirr
+  /// payment, or null when none carries one. The confirmation SMS already
+  /// tells us this — surfacing it is just one sorted SELECT.
+  Future<int?> latestTelebirrBalanceCents() async {
+    final rows = await _db.rawQuery(
+      'SELECT balance_after_cents FROM payments '
+      'WHERE method = ? AND balance_after_cents IS NOT NULL '
+      'ORDER BY sms_timestamp_ms DESC, id DESC LIMIT 1',
+      [PaymentMethod.telebirr.storedName],
+    );
+    if (rows.isEmpty) return null;
+    return rows.first['balance_after_cents'] as int?;
+  }
+
   /// teleBirr vs cash split for a window — how the window's revenue arrived.
   /// Missing methods are simply absent from the map (zero revenue that way).
   Future<Map<PaymentMethod, BucketTotal>> totalsByMethod(

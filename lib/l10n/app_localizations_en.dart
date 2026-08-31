@@ -65,6 +65,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get telebirrPayment => 'teleBirr payment';
 
   @override
+  String walletBalance(Object amount) {
+    return 'Wallet: $amount';
+  }
+
+  @override
   String get cashSheetTitle => 'Add a cash fare';
 
   @override

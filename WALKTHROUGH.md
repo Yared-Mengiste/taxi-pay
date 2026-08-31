@@ -38,6 +38,12 @@ consequences for the permission flow you'll see in step 2.
 10. [CSV export](#10-csv-export)
 11. [Amharic localization](#11-amharic-localization)
 12. [Polish pass: theming, dark mode, empty states](#12-polish-pass-theming-dark-mode-empty-states)
+13. [teleBirr wallet balance on the home card](#13-telebirr-wallet-balance-on-the-home-card)
+14. [Payment feedback: beep + haptic](#14-payment-feedback-beep--haptic)
+15. [Backup export: sharing the SQLite file](#15-backup-export-sharing-the-sqlite-file)
+16. [CSV export with a date-range picker](#16-csv-export-with-a-date-range-picker)
+17. [Editable cash entries (SMS receipts stay immutable)](#17-editable-cash-entries-sms-receipts-stay-immutable)
+18. [Expense tracking + net earnings (schema migration v2)](#18-expense-tracking--net-earnings-schema-migration-v2)
 
 ---
 
@@ -791,6 +797,36 @@ time: **open platform resources in `setUp`, settle real async with
 
 ---
 
+## 13. teleBirr wallet balance on the home card
+
+**Flutter concept: letting a "nearly free" feature stay nearly free.**
+
+The parser already extracts `balance_after_cents` from every confirmation
+SMS and the payments table already stores it (step 3/4). Surfacing "Wallet:
+2,450.00" is exactly one query and one getter — the discipline this step
+practices is *not inventing machinery* around that:
+
+```sql
+SELECT balance_after_cents FROM payments
+WHERE method = 'telebirr' AND balance_after_cents IS NOT NULL
+ORDER BY sms_timestamp_ms DESC, id DESC LIMIT 1
+```
+
+`PaymentRepository.latestTelebirrBalanceCents()` wraps it, and
+`SessionProvider._reloadActive()` folds it into the *existing* reload
+path — no new stream, no new provider. Any of the three triggers that
+already rebuild the session (cold start, captured-payment event, app
+resume) refreshes the balance too. That's the payoff of "the provider is
+a cache, the DB is the truth": a new read is one line inside the
+existing refresh, not a new lifecycle to manage.
+
+One honest design note in the widget doc comment: the badge is a *hint*,
+not ledger truth — it goes stale the moment the driver pays someone
+outside the app. So it renders as a small `labelMedium` row on the live
+card (and under the START button when idle), not as a headline number.
+
+---
+
 ## Build order recap
 
 | Commit | What it taught |
@@ -807,3 +843,9 @@ time: **open platform resources in `setUp`, settle real async with
 | CSV export | pure formatting + injected side effects, share sheets |
 | localization | gen-l10n, ICU plurals, am-first fallbacks |
 | polish | seeded theming, dark mode, designed empty states |
+| wallet balance | one SELECT + one getter; keeping a cheap feature cheap |
+| payment feedback | streams as side-effect buses, injectable haptics |
+| backup export | file I/O services, WAL checkpoints, share sheets again |
+| CSV date range | preset windows as pure date math |
+| cash edit/delete | immutability by WHERE clause, not by UI hiding |
+| expenses + net | schema v2 migration, gross vs net everywhere |

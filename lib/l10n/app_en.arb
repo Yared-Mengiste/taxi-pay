@@ -14,6 +14,12 @@
   "actionStop": "Stop",
   "cashFare": "Cash fare",
   "telebirrPayment": "teleBirr payment",
+  "walletBalance": "Wallet: {amount}",
+  "@walletBalance": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
 
   "cashSheetTitle": "Add a cash fare",
   "cashSheetBody": "Cash fares join the same session total as teleBirr payments.",

@@ -124,6 +124,31 @@ void main() {
       );
     });
 
+    test('latestTelebirrBalanceCents returns the newest teleBirr balance',
+        () async {
+      final s = await sessions.startSession(nowMs: 1000);
+      expect(await payments.latestTelebirrBalanceCents(), isNull);
+
+      Future<void> tx(String id, int cents, int balance, int at) =>
+          payments.insertTelebirrPaymentIfMissing(Payment(
+            transactionId: id,
+            sessionId: s.id,
+            method: PaymentMethod.telebirr,
+            amountCents: cents,
+            balanceAfterCents: balance,
+            smsTimestampMs: at,
+            createdAtMs: at,
+          ));
+
+      await tx('TX1', 15000, 245000, 2000);
+      await tx('TX2', 5000, 250000, 3000);
+      // Cash rows never carry a balance and must not be considered.
+      await payments.addCashPayment(
+          sessionId: s.id, amountCents: 1000, timestampMs: 4000);
+
+      expect(await payments.latestTelebirrBalanceCents(), 250000);
+    });
+
     test('paymentsBetween is [from, to) over sms timestamps', () async {
       final s = await sessions.startSession();
       for (final ts in [100, 200, 300]) {
