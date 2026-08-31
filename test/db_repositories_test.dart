@@ -159,6 +159,60 @@ void main() {
       expect(inRange.map((p) => p.smsTimestampMs), [100, 200]);
     });
 
+    test('cash edit/delete only ever touch cash rows', () async {
+      final s = await sessions.startSession(nowMs: 1000);
+      await payments.addCashPayment(
+          sessionId: s.id, amountCents: 5000, timestampMs: 1500);
+      await payments.insertTelebirrPaymentIfMissing(Payment(
+        transactionId: 'TX9',
+        sessionId: s.id,
+        method: PaymentMethod.telebirr,
+        amountCents: 12000,
+        smsTimestampMs: 1600,
+        createdAtMs: 1600,
+      ));
+
+      Future<int> idOf(PaymentMethod method) async => (await payments
+              .paymentsForSession(s.id))
+          .firstWhere((p) => p.method == method)
+          .id!;
+      final cashRowId = await idOf(PaymentMethod.cash);
+      final txRowId = await idOf(PaymentMethod.telebirr);
+
+      // Editing a cash entry works and totals follow.
+      expect(
+        await payments.updateCashAmount(
+            paymentId: cashRowId, amountCents: 4200),
+        isTrue,
+      );
+      final afterEdit = await payments.totalsForSession(s.id);
+      expect(afterEdit.totalCents, 12000 + 4200);
+
+      // The same calls aimed at a teleBirr row are refused, and the row
+      // survives untouched — receipts are immutable at the query level.
+      expect(
+        await payments.updateCashAmount(
+            paymentId: txRowId, amountCents: 1),
+        isFalse,
+      );
+      expect(await payments.deleteCashPayment(paymentId: txRowId), isFalse);
+      final afterAttack = await payments.paymentsForSession(s.id);
+      expect(afterAttack, hasLength(2));
+      expect(
+        afterAttack
+            .firstWhere((p) => p.method == PaymentMethod.telebirr)
+            .amountCents,
+        12000,
+      );
+
+      // Deleting the cash entry removes exactly it.
+      expect(await payments.deleteCashPayment(paymentId: cashRowId), isTrue);
+      expect(await payments.deleteCashPayment(paymentId: cashRowId), isFalse);
+      final afterDelete = await payments.totalsForSession(s.id);
+      expect(afterDelete.paymentCount, 1);
+      expect(afterDelete.totalCents, 12000);
+    });
+
     test('dailyTotals buckets by local calendar day', () async {
       final s = await sessions.startSession();
       final day1 = DateTime(2026, 8, 30, 10, 30).millisecondsSinceEpoch;

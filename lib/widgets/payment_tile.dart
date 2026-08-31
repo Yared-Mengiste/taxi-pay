@@ -6,10 +6,17 @@ import '../util/dates.dart';
 import '../util/money.dart';
 
 /// One row on the live session list: amount, payer, time, method.
+///
+/// Cash entries are the only user-authored rows, so they're the only ones
+/// with an edit affordance ([onEdit]); teleBirr rows are receipts and stay
+/// read-only.
 class PaymentTile extends StatelessWidget {
-  const PaymentTile({super.key, required this.payment});
+  const PaymentTile({super.key, required this.payment, this.onEdit});
 
   final Payment payment;
+
+  /// Opens the edit sheet when tapped; null on teleBirr rows.
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +26,7 @@ class PaymentTile extends StatelessWidget {
     final isCash = payment.method == PaymentMethod.cash;
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      onTap: onEdit,
       leading: isCash
           ? CircleAvatar(
               backgroundColor: scheme.secondaryContainer,
@@ -45,12 +53,21 @@ class PaymentTile extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      trailing: Text(
-        formatBirr(payment.amountCents),
-        style: Theme.of(context)
-            .textTheme
-            .titleMedium
-            ?.copyWith(fontWeight: FontWeight.w700),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            formatBirr(payment.amountCents),
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          if (onEdit != null) ...[
+            const SizedBox(width: 4),
+            Icon(Icons.edit_rounded, size: 18, color: scheme.onSurfaceVariant),
+          ],
+        ],
       ),
     );
   }

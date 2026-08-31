@@ -72,6 +72,35 @@ class PaymentRepository {
     return rows.map(Payment.fromRow).toList();
   }
 
+  /// Corrects a mistyped cash amount. The immutability rule for teleBirr
+  /// rows lives *here*, in the WHERE clause — not in the UI: a payment
+  /// derived from a teleBirr SMS is a receipt, and no code path (mistaken
+  /// id, future refactor, anything) may mutate it. Returns false when the
+  /// row isn't a cash entry.
+  Future<bool> updateCashAmount({
+    required int paymentId,
+    required int amountCents,
+  }) async {
+    final count = await _db.update(
+      'payments',
+      {'amount_cents': amountCents},
+      where: 'id = ? AND method = ?',
+      whereArgs: [paymentId, PaymentMethod.cash.storedName],
+    );
+    return count > 0;
+  }
+
+  /// Deletes a cash entry (see [updateCashAmount] for why cash-only).
+  /// Returns false when the row isn't a cash entry.
+  Future<bool> deleteCashPayment({required int paymentId}) async {
+    final count = await _db.delete(
+      'payments',
+      where: 'id = ? AND method = ?',
+      whereArgs: [paymentId, PaymentMethod.cash.storedName],
+    );
+    return count > 0;
+  }
+
   /// Sum/count of one session's payments.
   Future<SessionTotals> totalsForSession(int sessionId) async {
     final rows = await _db.rawQuery(

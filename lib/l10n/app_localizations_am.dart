@@ -82,6 +82,30 @@ class AppLocalizationsAm extends AppLocalizations {
   String get cashAdd => 'ጨምር';
 
   @override
+  String get editCashTitle => 'የጥሬ ገንዘብ ክፍያን አስተካክል';
+
+  @override
+  String get editCashBody => 'መጠኑን ያስተካክሉ፣ ወይም ስህተት ከሆነ ክፍያውን ይሰርዙ።';
+
+  @override
+  String get editCashSave => 'አስቀምጥ';
+
+  @override
+  String get editCashDelete => 'ክፍያውን ሰርዝ';
+
+  @override
+  String get editCashDeleteConfirmTitle => 'ይህ ክፍያ ይሰረዝ?';
+
+  @override
+  String get editCashDeleteConfirmBody => 'ከድምሩ ይጠፋል። ከሰረዙ በኋላ መመለስ አይቻልም።';
+
+  @override
+  String get editCashDeleteConfirmAction => 'ሰርዝ';
+
+  @override
+  String get editCashDeleteConfirmCancel => 'ተወው';
+
+  @override
   String get feedWaitingTitle => 'የተሌቢር ክፍያዎችን በመጠበቅ ላይ…';
 
   @override

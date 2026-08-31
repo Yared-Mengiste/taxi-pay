@@ -27,6 +27,15 @@
   "cashAmountHint": "ለምሳሌ 150",
   "cashAdd": "ጨምር",
 
+  "editCashTitle": "የጥሬ ገንዘብ ክፍያን አስተካክል",
+  "editCashBody": "መጠኑን ያስተካክሉ፣ ወይም ስህተት ከሆነ ክፍያውን ይሰርዙ።",
+  "editCashSave": "አስቀምጥ",
+  "editCashDelete": "ክፍያውን ሰርዝ",
+  "editCashDeleteConfirmTitle": "ይህ ክፍያ ይሰረዝ?",
+  "editCashDeleteConfirmBody": "ከድምሩ ይጠፋል። ከሰረዙ በኋላ መመለስ አይቻልም።",
+  "editCashDeleteConfirmAction": "ሰርዝ",
+  "editCashDeleteConfirmCancel": "ተወው",
+
   "feedWaitingTitle": "የተሌቢር ክፍያዎችን በመጠበቅ ላይ…",
   "feedWaitingBody": "ወደ ስልክዎ የተላኩ ክፍያዎች ወዲያውኑ እዚህ ይታያሉ።\nበጥሬ ገንዘብ የሚከፈል ከሆነ? ከታች ያስገቡ።",
   "feedAddCash": "የጥሬ ገንዘብ ክፍያ ያስገቡ",

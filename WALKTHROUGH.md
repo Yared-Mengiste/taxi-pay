@@ -937,6 +937,44 @@ And `_pickCustomRange` captures `Navigator.of` and the l10n strings
 
 ---
 
+## 17. Editable cash entries (SMS receipts stay immutable)
+
+**Flutter concepts: sealed classes as sheet results, confirm dialogs,
+destructive-action design. Domain concept: where to enforce an
+invariant.**
+
+A mistyped cash fare used to be stuck — there was no write path to the
+payments table after insert. The fix is two repository methods and one
+sheet, but the interesting decision is *where the immutability rule
+lives*. It would be easy to enforce "cash-only edits" in the UI (hide
+the affordance on teleBirr tiles) — and the UI does hide it — but UI is
+policy, not law. The actual guard is the SQL:
+
+```dart
+_db.update('payments', {'amount_cents': amountCents},
+    where: 'id = ? AND method = ?', whereArgs: [id, 'cash']);
+```
+
+A `WHERE method = 'cash'` clause means no caller — wrong id, future
+refactor, anything — can mutate a teleBirr row, because those rows are
+*receipts*: the SMS text is the audit trail, and an "edited" receipt is
+a corrupted one. The return value (`count > 0`) doubles as the signal:
+`false` means "that wasn't a cash entry", and the provider checks
+`payment.method` up front anyway so the UI can be honest about intent.
+The schema's `CHECK (amount_cents > 0)` still holds on update, so a
+zero/negative correction is impossible at the same level.
+
+The sheet mirrors the add-cash sheet (same keyboard-level validation,
+prefilled via `formatAmount` so the field shows exactly what the tile
+shows) and adds the app's one destructive action. Delete is behind an
+`AlertDialog` because undo doesn't exist — and the sheet returns a
+**sealed class** (`CashEditSave(cents)` | `CashEditDelete()`), so the
+wrapper's `switch` is exhaustive: adding a third outcome later is a
+compile error until every caller handles it. That's the whole argument
+for sealed result types over sentinel values like `-1`.
+
+---
+
 ## Build order recap
 
 | Commit | What it taught |

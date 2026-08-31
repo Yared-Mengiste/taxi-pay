@@ -27,6 +27,15 @@
   "cashAmountHint": "e.g. 150",
   "cashAdd": "Add",
 
+  "editCashTitle": "Edit cash fare",
+  "editCashBody": "Correct the amount, or delete this entry if it was a mistake.",
+  "editCashSave": "Save",
+  "editCashDelete": "Delete entry",
+  "editCashDeleteConfirmTitle": "Delete this entry?",
+  "editCashDeleteConfirmBody": "It will be removed from the session total. This can't be undone.",
+  "editCashDeleteConfirmAction": "Delete",
+  "editCashDeleteConfirmCancel": "Cancel",
+
   "feedWaitingTitle": "Waiting for teleBirr payments…",
   "feedWaitingBody": "Payments sent to your phone appear here instantly.\nPassengers paying cash? Log it below.",
   "feedAddCash": "Add cash fare",

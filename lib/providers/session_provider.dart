@@ -111,6 +111,27 @@ class SessionProvider extends ChangeNotifier with WidgetsBindingObserver {
     await _reloadActive();
   }
 
+  /// Corrects a mistyped cash fare. TeleBirr payments are receipts and
+  /// are never editable — the repository rejects them at the query level.
+  Future<void> updateCash({
+    required Payment payment,
+    required int amountCents,
+  }) async {
+    if (payment.method != PaymentMethod.cash || payment.id == null) return;
+    await _paymentsRepo.updateCashAmount(
+      paymentId: payment.id!,
+      amountCents: amountCents,
+    );
+    await _reloadActive();
+  }
+
+  /// Removes a mistyped cash fare entirely (see [updateCash]).
+  Future<void> deleteCash({required Payment payment}) async {
+    if (payment.method != PaymentMethod.cash || payment.id == null) return;
+    await _paymentsRepo.deleteCashPayment(paymentId: payment.id!);
+    await _reloadActive();
+  }
+
   Future<void> _reloadActive() async {
     _activeSession = await _sessionsRepo.activeSession();
     _payments = _activeSession == null

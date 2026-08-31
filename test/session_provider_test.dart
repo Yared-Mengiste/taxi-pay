@@ -90,6 +90,41 @@ void main() {
     expect(provider.walletBalanceCents, 266800);
   });
 
+  test('cash entries can be corrected or deleted through the provider',
+      () async {
+    await provider.load();
+    await provider.start();
+    await provider.addCash(amountCents: 5000);
+    await provider.addCash(amountCents: 2500);
+    final cashEntry = provider.payments.first; // newest first = the 2500
+    expect(cashEntry.method, PaymentMethod.cash);
+
+    await provider.updateCash(payment: cashEntry, amountCents: 3000);
+    expect(provider.totalCents, 8000); // 5000 + corrected 3000
+    expect(provider.payments.first.amountCents, 3000);
+
+    await provider.deleteCash(payment: provider.payments.first);
+    expect(provider.paymentCount, 1);
+    expect(provider.totalCents, 5000);
+
+    // And the telebirr path is a no-op even if called directly.
+    await PaymentRepository(db).insertTelebirrPaymentIfMissing(Payment(
+      transactionId: 'TX1',
+      sessionId: provider.activeSession!.id,
+      method: PaymentMethod.telebirr,
+      amountCents: 9000,
+      smsTimestampMs: 2000,
+      createdAtMs: 2000,
+    ));
+    await provider.load();
+    final telebirrEntry =
+        provider.payments.firstWhere((p) => p.method == PaymentMethod.telebirr);
+    await provider.updateCash(payment: telebirrEntry, amountCents: 1);
+    await provider.deleteCash(payment: telebirrEntry);
+    expect(provider.paymentCount, 2);
+    expect(provider.totalCents, 5000 + 9000);
+  });
+
   test('cold start recovers an active session from the DB', () async {
     // A session was running when the "app died": only the DB row survives.
     final repo = SessionRepository(db);

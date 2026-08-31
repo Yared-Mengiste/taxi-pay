@@ -86,6 +86,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cashAdd => 'Add';
 
   @override
+  String get editCashTitle => 'Edit cash fare';
+
+  @override
+  String get editCashBody =>
+      'Correct the amount, or delete this entry if it was a mistake.';
+
+  @override
+  String get editCashSave => 'Save';
+
+  @override
+  String get editCashDelete => 'Delete entry';
+
+  @override
+  String get editCashDeleteConfirmTitle => 'Delete this entry?';
+
+  @override
+  String get editCashDeleteConfirmBody =>
+      'It will be removed from the session total. This can\'t be undone.';
+
+  @override
+  String get editCashDeleteConfirmAction => 'Delete';
+
+  @override
+  String get editCashDeleteConfirmCancel => 'Cancel';
+
+  @override
   String get feedWaitingTitle => 'Waiting for teleBirr payments…';
 
   @override

@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/l10n.dart';
+import '../models/payment.dart';
 import '../providers/session_provider.dart';
 import '../services/backup_service.dart';
 import '../util/dates.dart';
 import '../util/money.dart';
 import '../widgets/add_cash_sheet.dart';
+import '../widgets/edit_cash_sheet.dart';
 import '../widgets/payment_tile.dart';
 
 /// The one screen a driver uses mid-shift: the session control, the live
@@ -449,8 +451,17 @@ class _PaymentFeed extends StatelessWidget {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(8, 4, 8, 16),
       itemCount: payments.length,
-      itemBuilder: (context, index) =>
-          PaymentTile(payment: payments[index]),
+      itemBuilder: (context, index) {
+        final payment = payments[index];
+        return PaymentTile(
+          payment: payment,
+          // Cash is the driver's own entry — fixable. SMS rows stay
+          // immutable (they're the receipts).
+          onEdit: payment.method == PaymentMethod.cash
+              ? () => promptAndEditCash(context, payment: payment)
+              : null,
+        );
+      },
     );
   }
 }

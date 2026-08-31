@@ -206,6 +206,54 @@ abstract class AppLocalizations {
   /// **'Add'**
   String get cashAdd;
 
+  /// No description provided for @editCashTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit cash fare'**
+  String get editCashTitle;
+
+  /// No description provided for @editCashBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Correct the amount, or delete this entry if it was a mistake.'**
+  String get editCashBody;
+
+  /// No description provided for @editCashSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get editCashSave;
+
+  /// No description provided for @editCashDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete entry'**
+  String get editCashDelete;
+
+  /// No description provided for @editCashDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this entry?'**
+  String get editCashDeleteConfirmTitle;
+
+  /// No description provided for @editCashDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It will be removed from the session total. This can\'t be undone.'**
+  String get editCashDeleteConfirmBody;
+
+  /// No description provided for @editCashDeleteConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get editCashDeleteConfirmAction;
+
+  /// No description provided for @editCashDeleteConfirmCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get editCashDeleteConfirmCancel;
+
   /// No description provided for @feedWaitingTitle.
   ///
   /// In en, this message translates to:
