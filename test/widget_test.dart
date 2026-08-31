@@ -36,6 +36,11 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     await tester.pumpWidget(
         TaxiPayApp(settings: SettingsService(prefs), app: app));
+    // The session and dashboard providers fire real sqflite-ffi queries on
+    // construction; under fake async their completions never land. runAsync
+    // lets the real isolate round-trips finish, then a settle pass rebuilds.
+    await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 200)));
     await tester.pumpAndSettle();
     expect(find.text('Welcome to Taxi Pay'), findsNothing);
     expect(find.text('Taxi Pay'), findsOneWidget);

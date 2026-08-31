@@ -27,14 +27,14 @@ consequences for the permission flow you'll see in step 2.
 ## Table of contents (filled in as the build progresses)
 
 1. [Project scaffold, dependencies, folder structure](#1-project-scaffold-dependencies-folder-structure)
-2. Permissions + onboarding flow (restricted settings, battery exemption)
-3. Local database schema (sessions, payments)
-4. The teleBirr SMS parser + sender validation
-5. Background SMS handler
-6. Reconciliation query on resume
-7. Session start/stop logic + persistence
-8. Live session screen
-9. Dashboard + charts
+2. [Permissions + onboarding flow](#2-permissions--onboarding-flow-restricted-settings-battery-exemption)
+3. [Local database schema](#3-local-database-schema-sessions--payments)
+4. [The teleBirr SMS parser + sender validation](#4-the-telebirr-sms-parser--sender-validation)
+5. [Background SMS handler](#5-background-sms-handler-wired-to-the-plugin)
+6. [Reconciliation query on resume](#6-reconciliation-query-on-resume-periodic-workmanager-job)
+7. [Session start/stop logic + persistence](#7-session-startstop-logic--persistence)
+8. [Live session screen](#8-live-session-screen)
+9. [Dashboard + charts](#9-dashboard--charts)
 10. CSV export
 11. Amharic localization
 12. Polish pass: theming, dark mode, empty states
@@ -504,3 +504,137 @@ no spinners or FutureBuilders: `TaxiPayApp(settings: ..., app: ...)` is
 synchronous from its first frame.
 
 ---
+
+## 8. Live session screen
+
+**Flutter concepts: `Consumer`/`context.read` split, widget decomposition,
+modal bottom sheets, `TextInputFormatter` validation, async-gap context
+rules.**
+
+The home screen (`lib/screens/home_screen.dart`) is deliberately two
+widgets in one: `_IdleView` (big circular START button + summary of the
+shift that just ended) and `_LiveSessionView` (LIVE banner, running total
+in `displaySmall`, payment count, Cash + Stop buttons, feed below). The
+`Consumer<SessionProvider>` at the top switches between them:
+
+```dart
+body: Consumer<SessionProvider>(
+  builder: (context, session, _) => session.isRunning
+      ? _LiveSessionView(session: session)
+      : _IdleView(session: session),
+),
+```
+
+Why a `Consumer` here and `context.read` inside button callbacks?
+`Consumer` rebuilds when the notifier fires (totals, feed); `read` inside
+an `onPressed` grabs the provider once without subscribing — exactly what
+a fire-and-forget action needs.
+
+### The cash sheet — parse once, validate at the keyboard
+
+`showCashEntrySheet` (`lib/widgets/add_cash_sheet.dart`) returns
+`Future<int?>`: cents, or null when dismissed. Two details worth stealing:
+
+- `FilteringTextInputFormatter.allow(RegExp(r'^\d{0,7}([.,]\d{0,2})?'))`
+  makes an *invalid* amount untypable — the Add button's `num.tryParse`
+  is a backstop, not the defense.
+- it accepts both `,` and `.` as the decimal separator (keyboard
+  layouts vary) and normalizes before parsing.
+
+The wrapper that shows the sheet and writes to the provider captures the
+provider *before* the await:
+
+```dart
+Future<void> promptAndAddCash(BuildContext context) async {
+  final session = context.read<SessionProvider>();  // before the gap
+  final cents = await showCashEntrySheet(context);
+  if (cents != null && cents > 0) {
+    await session.addCash(amountCents: cents);
+  }
+}
+```
+
+Using `context` after an `await` is a lint error (`use_build_context_synchronously`)
+for good reason: the widget may be gone by the time the sheet closes.
+
+### A real bug the tests caught
+
+The first teardown of the widget tests produced *"A SessionProvider was
+used after being disposed"*: `load()` is async, and its
+`notifyListeners()` can land after the test tore the tree down. Guarded
+now with a `_disposed` flag — the same race exists in production during
+hot restart.
+
+---
+
+## 9. Dashboard + charts
+
+**Flutter concepts: SQL aggregation vs Dart aggregation, `IndexedStack`
+navigation shells, third-party charting (`fl_chart`), `switch`
+expressions.**
+
+The design question: where does grouping happen? Answer: **SQLite groups
+by day (what SQL is good at), Dart groups days into weeks/months (what
+calendars are good at)**. One `GROUP BY` query per reload:
+
+```sql
+SELECT strftime('%Y-%m-%d', sms_timestamp_ms / 1000, 'unixepoch',
+       'localtime') AS bucket,
+       SUM(amount_cents), COUNT(*)
+FROM payments
+WHERE sms_timestamp_ms >= ? AND sms_timestamp_ms < ?
+GROUP BY bucket
+```
+
+`'localtime'` matters: a driver's "day" is their wall clock, not UTC.
+`DashboardProvider` then folds day-buckets into week-buckets
+(Monday-anchored — the Ethiopian convention) or month-buckets, and
+zero-fills: **an empty day is still a bar on the chart.**
+
+### The `addMonths` trap (an actual bug from this step)
+
+Dart's `~/` truncates toward zero: `(-4) ~/ 12 == 0`, not `-1`. My first
+month-window math happily turned "11 months before Aug 2026" into *Sep
+2026* — a window from the future to the future, empty query, all-zero
+chart, two failing tests. Floor, don't truncate:
+
+```dart
+final totalMonths = d.month - 1 + n;
+return DateTime(d.year + (totalMonths / 12).floor(), totalMonths % 12 + 1);
+```
+
+Pure date helpers (`lib/util/dates.dart`) got their own unit tests the
+same day — calendar math is exactly the kind of code that looks obvious
+and isn't.
+
+### Navigation shell
+
+`_HomeShell` in `lib/app.dart`: a `NavigationBar` + `IndexedStack`. Both
+providers sit *above* the shell in a `MultiProvider`, so tab switches
+never destroy session state, and both screens stay alive (scroll
+positions, chart state) while hidden. Switching to the dashboard tab
+triggers `reload()` so payments captured on the session tab show up.
+
+### `fl_chart` version pinning
+
+`SideTitleWidget` changed its API between versions (`axisSide:` →
+`meta:`). The lockfile pins fl_chart 1.2.0; the chart wrapper keeps all
+fl_chart types inside `_RevenueBarChart` so a future bump touches one
+widget.
+
+### Widget tests + real async work
+
+Adding a second provider that queries the DB on construction broke
+`pumpAndSettle` in widget tests: under fake async, the sqflite-ffi
+isolate round-trips never complete, the dashboard spinner never stops
+settling. The recipe:
+
+```dart
+await tester.runAsync(() =>
+    Future<void>.delayed(const Duration(milliseconds: 200)));
+await tester.pumpAndSettle();
+```
+
+`runAsync` suspends the fake clock and lets real async I/O finish.
+Rule of thumb: pump-only tests for layout, `runAsync` whenever a
+provider's constructor touches ffi/platform channels.

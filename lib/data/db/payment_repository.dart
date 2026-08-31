@@ -131,6 +131,26 @@ class PaymentRepository {
     );
     return rows.first['total'] as int;
   }
+
+  /// teleBirr vs cash split for a window — how the window's revenue arrived.
+  /// Missing methods are simply absent from the map (zero revenue that way).
+  Future<Map<PaymentMethod, BucketTotal>> totalsByMethod(
+      int fromMs, int toMs) async {
+    final rows = await _db.rawQuery(
+      'SELECT method, COALESCE(SUM(amount_cents), 0) AS total, COUNT(*) AS n '
+      'FROM payments WHERE sms_timestamp_ms >= ? AND sms_timestamp_ms < ? '
+      'GROUP BY method',
+      [fromMs, toMs],
+    );
+    return {
+      for (final row in rows)
+        PaymentMethod.fromStoredName(row['method'] as String): BucketTotal(
+          row['method'] as String,
+          row['total'] as int,
+          row['n'] as int,
+        ),
+    };
+  }
 }
 
 class SessionTotals {

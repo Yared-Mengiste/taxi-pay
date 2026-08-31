@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'data/db/app_database.dart';
+import 'data/db/payment_repository.dart';
 import 'data/sms/sms_service.dart';
+import 'providers/dashboard_provider.dart';
 import 'providers/session_provider.dart';
+import 'screens/dashboard_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'services/background_task_service.dart';
@@ -75,17 +78,74 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
       title: 'Taxi Pay',
       theme: ThemeData(useMaterial3: true),
       home: widget.settings.isOnboarded
-          ? ChangeNotifierProvider(
-              create: (_) => SessionProvider(
-                app: widget.app,
-                capturedPayments: SmsService.instance.capturedPayments,
-              )..load(),
-              child: const HomeScreen(),
+          ? MultiProvider(
+              providers: [
+                ChangeNotifierProvider(
+                  create: (_) => SessionProvider(
+                    app: widget.app,
+                    capturedPayments: SmsService.instance.capturedPayments,
+                  )..load(),
+                ),
+                ChangeNotifierProvider(
+                  create: (_) =>
+                      DashboardProvider(PaymentRepository(widget.app))..load(),
+                ),
+              ],
+              child: const _HomeShell(),
             )
           : OnboardingScreen(
               settings: widget.settings,
               permissions: PermissionsService(),
             ),
+    );
+  }
+}
+
+/// Two-tab shell: session and dashboard. Both providers sit *above* this
+/// widget, so switching tabs never destroys session state, and an
+/// [IndexedStack] keeps both trees alive (scroll position, chart state).
+class _HomeShell extends StatefulWidget {
+  const _HomeShell();
+
+  @override
+  State<_HomeShell> createState() => _HomeShellState();
+}
+
+class _HomeShellState extends State<_HomeShell> {
+  int _index = 0;
+
+  static const _screens = [HomeScreen(), DashboardScreen()];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(
+        index: _index,
+        children: _screens,
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _index,
+        onDestinationSelected: (index) {
+          setState(() => _index = index);
+          // Coming back to the dashboard should reflect payments captured
+          // while the user was on the session tab.
+          if (_screens[index] is DashboardScreen) {
+            context.read<DashboardProvider>().reload();
+          }
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.sensors_rounded),
+            selectedIcon: Icon(Icons.sensors_rounded),
+            label: 'Session',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.bar_chart_rounded),
+            selectedIcon: Icon(Icons.bar_chart_rounded),
+            label: 'Dashboard',
+          ),
+        ],
+      ),
     );
   }
 }
