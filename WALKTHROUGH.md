@@ -443,3 +443,64 @@ reusing `ReconciliationService` unchanged — the "everything through storage"
 architecture paying off a second time.
 
 ---
+
+## 7. Session start/stop logic + persistence
+
+**Flutter concepts: `ChangeNotifier` + `provider`, constructor injection,
+`WidgetsBindingObserver`, why `main()` should own async bootstrap.**
+
+`SessionProvider` (`lib/providers/session_provider.dart`) is the bridge
+between the data layer and the UI, and its central design rule is: **the
+provider is a cache plus a notifier — the database is the truth.** Every
+"read" rebuilds from SQLite (`_reloadActive`), which is why three different
+triggers all converge to the same consistent state:
+
+- `load()` — cold start. If a session was running when the process died,
+  `activeSession()` still finds it and the UI comes back up in "running"
+  mode. Persistence came free from step 3's schema decision.
+- `capturedPayments` stream events — a payment was captured while we were
+  in the foreground.
+- `didChangeAppLifecycleState(resumed)` — the background isolate may have
+  written rows we never heard about; reload picks them up.
+
+`start()`/`stop()` also schedule and cancel the periodic WorkManager job —
+reconciliation only matters *while a session is active*.
+
+```dart
+Future<void> stop() async {
+  final session = _activeSession;
+  if (session == null) return;
+  final endedAtMs = await _sessionsRepo.stopSession();
+  await backgroundTasks?.stopPeriodicReconciliation();
+  _lastEndedSession = Session(...endedAtMs: endedAtMs...);
+  _lastEndedPayments = _payments;   // kept for the shift-summary screen
+  _activeSession = null;
+  _payments = [];
+  notifyListeners();
+}
+```
+
+### Composition over callbacks
+
+The provider takes the *stream*, not the SmsService:
+
+```dart
+SessionProvider({required AppDatabase app,
+                 required Stream<Payment> capturedPayments, ...})
+```
+
+so tests just pass a `StreamController.broadcast()` they control — no
+mocking framework, no service doubles.
+
+### The `main()` refactor
+
+This step moved async bootstrap (SharedPreferences + SQLite open) out of the
+widget tree into `main()`, handing both down as constructor arguments. The
+widget-test failures that forced this are worth remembering: opening a
+*file-backed* database inside `testWidgets` never completes, because the
+fake-async test clock never advances real disk I/O. Doing I/O before
+`runApp` removes the problem entirely — and as a bonus the widget tree has
+no spinners or FutureBuilders: `TaxiPayApp(settings: ..., app: ...)` is
+synchronous from its first frame.
+
+---

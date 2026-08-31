@@ -20,14 +20,17 @@ class SessionRepository {
     return Session(id: id, startedAtMs: ts);
   }
 
-  /// Closes the running session, if any.
-  Future<void> stopSession({int? nowMs}) async {
+  /// Closes the running session, if any. Returns the ended-at timestamp
+  /// (useful for building a summary of the just-finished session), or -1 if
+  /// there was nothing to stop.
+  Future<int> stopSession({int? nowMs}) async {
     final ts = nowMs ?? DateTime.now().millisecondsSinceEpoch;
-    await _db.update(
+    final updated = await _db.update(
       'sessions',
       {'ended_at_ms': ts},
       where: 'ended_at_ms IS NULL',
     );
+    return updated > 0 ? ts : -1;
   }
 
   /// The running session, or null. This single query is the app's persisted
