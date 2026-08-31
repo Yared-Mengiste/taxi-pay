@@ -187,3 +187,76 @@ because some ROM variants nag about it; SMS still gets captured, just less
 promptly — and step 6's reconciliation is designed to catch gaps.
 
 ---
+
+## 3. Local database schema: sessions + payments
+
+**Flutter/Dart concepts: SQLite via `sqflite`, repository pattern, money as
+integers, testing databases on the host with `sqflite_common_ffi`.**
+
+### The schema
+
+```
+sessions(id, started_at_ms, ended_at_ms)          -- ended_at_ms NULL = active
+payments(id, transaction_id UNIQUE, session_id → sessions,
+         method 'telebirr'|'cash', amount_cents, payer_name, payer_phone,
+         balance_after_cents, sms_timestamp_ms, created_at_ms)
+```
+
+Three decisions worth internalizing:
+
+**A session row *is* the persisted listening state.** Requirement: "session
+state survives the app being killed." The obvious-but-wrong approach is a
+`bool isListening` in memory plus something in `SharedPreferences`. Instead,
+the *database* holds truth: `SELECT … WHERE ended_at_ms IS NULL` answers both
+"is a session active?" and "since when?" in one query, and it is the same
+query from any isolate (see step 5 — the SMS background handler has to decide
+whether an incoming payment belongs to a session, from a separate isolate,
+with no access to the UI's memory).
+
+**Money is `amount_cents INTEGER`, never a double.** `0.1 + 0.2 == 0.30000000000000004`
+in binary floating point; a revenue app that occasionally prints
+`450.00000000001 ብር` is broken in the way users trust least.
+
+**Dedupe is a database constraint, not a code path.** `transaction_id` is
+`UNIQUE` and inserts use `INSERT OR IGNORE`, so the foreground listener, the
+background isolate and reconciliation can all try to save the same teleBirr
+payment and exactly one row survives — no coordination needed:
+
+```dart
+final count = await _db.insert('payments', payment.toRow(),
+    conflictAlgorithm: ConflictAlgorithm.ignore);
+return count > 0; // false = duplicate, already known
+```
+
+### One database, several isolates
+
+`AppDatabase` is deliberately boring: `openDefault()` caches one connection
+per isolate (Dart objects can't cross isolate boundaries, and sqflite
+connections must not either), sets `PRAGMA foreign_keys = ON` and a
+`busy_timeout` so the (rare) case of two isolates writing simultaneously
+waits instead of crashing. Tests use `openInMemory()` with the *same*
+`onCreate`, so schema tests exercise the real DDL.
+
+### Testing SQLite without a phone
+
+`sqflite` normally talks to Android's SQLite through a platform channel —
+which doesn't exist in `flutter test`. The `sqflite_common_ffi` package
+provides a pure-Dart SQLite compiled via FFI as a drop-in `databaseFactory`:
+
+```dart
+setUpAll(() { sqfliteFfiInit(); databaseFactory = databaseFactoryFfi; });
+```
+
+That's why the repositories take an `AppDatabase` (a thin wrapper) rather
+than grabbing a singleton themselves — tests inject an in-memory database,
+production injects the file-backed one. Constructor injection beats global
+singletons precisely when side effects are expensive to fake.
+
+The tests (`test/db_repositories_test.dart`) pin down the behaviors the rest
+of the app leans on: start is idempotent (double-tapping Start can't fork two
+sessions), duplicate transaction IDs are dropped, cash entries get unique
+local IDs, foreign keys reject orphan payments, and `dailyTotals` buckets by
+**local** calendar day (`strftime(…, 'localtime')`) — matching the driver's
+wall clock, not UTC.
+
+---
