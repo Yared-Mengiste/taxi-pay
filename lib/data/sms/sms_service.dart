@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:another_telephony/telephony.dart';
+import 'package:flutter/foundation.dart';
 
 import '../db/app_database.dart';
 import '../../models/payment.dart';
@@ -48,6 +49,8 @@ class SmsService {
   }
 
   Future<void> _onNewMessage(SmsMessage message) async {
+    debugPrint('[taxi-pay/sms] incoming address="${message.address}" '
+        'date=${message.date}\n---- body ----\n${message.body}\n-------------');
     final app = await AppDatabase.openDefault();
     final inserted = await captureSmsMessage(
       app,

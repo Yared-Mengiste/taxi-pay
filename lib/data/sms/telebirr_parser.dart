@@ -65,9 +65,13 @@ final RegExp _currencyAmount = RegExp(
 );
 
 // Transaction id: "Transaction ID: 881234567890", "Trx Id 8Z5K2M9XYZ",
-// Amharic "የግብይት መለያ ቁጥር፦ 881234567890".
+// "transaction number is DHV7BW08R9" — including the real-world glued
+// "numberis" (teleBirr omits the space) — and Amharic
+// "የግብይት መለያ ቁጥር፦ 881234567890". `id`/`number` must be followed by an
+// optional standalone "is" (glued or spaced) and ≤5 non-alphanumeric
+// separator chars before the 8-24 char id itself.
 final RegExp _transactionId = RegExp(
-  r'(?:transaction|trx|ref(?:erence)?)\s*[.\s]*id[^\dA-Za-z]{0,5}([0-9A-Za-z]{8,24})'
+  r'(?:transaction|trx|ref(?:erence)?)\s*(?:number|id)\s*(?:is\b)?\s*[^\dA-Za-z]{0,5}([0-9A-Za-z]{8,24})'
   r'|መለያ\s*ቁጥር[^\dA-Za-z]{0,5}([0-9A-Za-z]{8,24})',
   caseSensitive: false,
 );

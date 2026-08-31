@@ -45,7 +45,11 @@ class AppDatabase {
 
   static Future<void> configureDatabase(Database db) async {
     await db.execute('PRAGMA foreign_keys = ON');
-    await db.execute('PRAGMA busy_timeout = 5000');
+    // `PRAGMA busy_timeout = N` returns the new value as a result row. On
+    // Android, db.execute (SQLiteDatabase.execSQL) rejects statements that
+    // return rows, so this must go through rawQuery. (execute works on
+    // iOS/desktop, so the mismatch only shows up on Android.)
+    await db.rawQuery('PRAGMA busy_timeout = 5000');
   }
 
   static Future<void> createSchema(Database db) async {

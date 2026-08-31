@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../l10n/l10n.dart';
 import '../../services/permissions_service.dart';
 import '../../services/settings_service.dart';
-import '../home_screen.dart';
 
 /// First-run flow: welcome -> SMS permission -> battery exemption.
 ///
@@ -16,10 +15,18 @@ class OnboardingScreen extends StatefulWidget {
     super.key,
     required this.permissions,
     required this.settings,
+    required this.onOnboarded,
   });
 
   final PermissionsService permissions;
   final SettingsService settings;
+
+  /// Invoked once onboarding is persisted. The app root rebuilds and swaps
+  /// this screen for the provider-backed home shell. Navigating to HomeScreen
+  /// directly is wrong here: pushed routes are siblings of `MaterialApp.home`,
+  /// so they sit *outside* the MultiProvider and blow up on
+  /// `Consumer<SessionProvider>`.
+  final VoidCallback onOnboarded;
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -81,9 +88,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     _finishing = true;
     await widget.settings.setOnboarded(true);
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-    );
+    widget.onOnboarded();
   }
 
   void _goTo(int step) => setState(() => _step = step);

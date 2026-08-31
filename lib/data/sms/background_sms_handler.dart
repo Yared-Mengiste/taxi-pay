@@ -1,4 +1,5 @@
 import 'package:another_telephony/telephony.dart';
+import 'package:flutter/foundation.dart';
 
 import '../db/app_database.dart';
 import 'sms_capture.dart';
@@ -12,6 +13,8 @@ import 'sms_capture.dart';
 /// it from the release APK without this annotation.
 @pragma('vm:entry-point')
 Future<void> smsBackgroundHandler(SmsMessage message) async {
+  debugPrint('[taxi-pay/sms] background incoming address="${message.address}" '
+      'date=${message.date}\n---- body ----\n${message.body}\n-------------');
   await captureSmsMessage(
     await AppDatabase.openDefault(),
     address: message.address,

@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import 'package:taxi_pay/data/db/app_database.dart';
 import 'package:taxi_pay/data/db/payment_repository.dart';
 import 'package:taxi_pay/data/db/session_repository.dart';
@@ -17,20 +19,34 @@ import 'package:taxi_pay/models/payment.dart';
 /// sender / no session / unparseable / duplicate). Being a plain function
 /// over an [AppDatabase], it runs identically on any isolate and is unit
 /// testable with an in-memory database.
+///
+/// Every drop is logged: capture failures are invisible otherwise (no
+/// exception, no UI feedback), and "why didn't my payment show up" is the
+/// first thing anyone debugging this app needs to know.
 Future<Payment?> captureSmsMessage(
   AppDatabase app, {
   required String? address,
   required String? body,
   required int timestampMs,
 }) async {
-  if (!isFromTelebirr(address)) return null;
+  if (!isFromTelebirr(address)) {
+    _log('dropped: sender "$address" is not teleBirr 127');
+    return null;
+  }
 
   final sessions = SessionRepository(app);
   final session = await sessions.activeSession();
-  if (session == null) return null;
+  if (session == null) {
+    _log('dropped: no active session (tap Start on the home screen)');
+    return null;
+  }
 
   final parsed = parseTelebirrSms(body);
-  if (parsed == null) return null;
+  if (parsed == null) {
+    _log('dropped: body did not parse as a received-payment confirmation.\n'
+        '---- body from 127 ----\n$body\n------------------------');
+    return null;
+  }
 
   final payment = Payment(
     transactionId: parsed.transactionId,
@@ -46,5 +62,13 @@ Future<Payment?> captureSmsMessage(
 
   final inserted =
       await PaymentRepository(app).insertTelebirrPaymentIfMissing(payment);
-  return inserted ? payment : null;
+  if (!inserted) {
+    _log('dropped: duplicate transaction id ${parsed.transactionId}');
+    return null;
+  }
+  _log('captured ${parsed.amountCents / 100} Birr, '
+      'tx ${parsed.transactionId}, session ${session.id}');
+  return payment;
 }
+
+void _log(String message) => debugPrint('[taxi-pay/sms] $message');

@@ -52,6 +52,36 @@ void main() {
       expect(p.payerName, 'Dawit Haile');
       expect(p.payerPhoneMasked, isNull);
     });
+
+    test('real telebirr SMS: "transaction numberis" typo, no space before paren', () {
+      // Verbatim from a device (2026-08-31). Note the glued "numberis",
+      // the missing space between payer name and "(2519****0874)", and the
+      // stray "303035" account fragment after the phone.
+      const body = 'Dear MENGESETA \n'
+          'You have received ETB 2.00 from Mengistu Ayalew(2519****0874) 303035 '
+          'on 31/08/2026 19:08:55. Your transaction numberis DHV7BW08R9. '
+          'Your current E-Money Account balance is ETB 26.68.\n'
+          'Thank you for using telebirr\n'
+          'Ethio telecom';
+      final p = parseTelebirrSms(body)!;
+      expect(p.amountCents, 200);
+      expect(p.payerName, 'Mengistu Ayalew');
+      expect(p.payerPhoneMasked, '2519****0874');
+      expect(p.balanceAfterCents, 2668);
+      expect(p.transactionId, 'DHV7BW08R9');
+    });
+
+    test('real telebirr SMS with spaces restored: "transaction number is"', () {
+      const body = 'Dear MENGESETA \n'
+          'You have received ETB 2.00 from Mengistu Ayalew (2519****0874) '
+          'on 31/08/2026 19:08:55. Your transaction number is DHV7BW08R9. '
+          'Your current E-Money Account balance is ETB 26.68.\n'
+          'Thank you for using telebirr\n'
+          'Ethio telecom';
+      final p = parseTelebirrSms(body)!;
+      expect(p.amountCents, 200);
+      expect(p.transactionId, 'DHV7BW08R9');
+    });
   });
 
   group('parseTelebirrSms — Amharic templates', () {

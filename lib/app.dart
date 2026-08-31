@@ -140,6 +140,9 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
           : OnboardingScreen(
               settings: widget.settings,
               permissions: PermissionsService(),
+              // Swaps the home route for the provider-backed shell. Routes
+              // pushed from onboarding would not see the MultiProvider.
+              onOnboarded: () => setState(() {}),
             ),
     );
   }
