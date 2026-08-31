@@ -18,7 +18,9 @@ phone every time a passenger pays them. During a work shift the driver taps
 **Start**; the app captures those SMS confirmations (strictly from teleBirr's
 short code **127**), parses out the amount/payer/transaction ID, shows a live
 running total, and aggregates everything into daily/weekly/monthly dashboards.
-Cash fares can be logged manually so daily totals reflect real income.
+Cash fares can be logged manually so daily totals reflect real income, and
+running costs (fuel above all) can be logged as expenses so every total has a
+**net** counterpart — what the shift actually paid the driver.
 
 It is fully offline: no backend, no cloud sync. It is distributed as a
 sideloaded APK (Google Play's SMS policy blocks this use case), which has real
@@ -972,6 +974,82 @@ shows) and adds the app's one destructive action. Delete is behind an
 wrapper's `switch` is exhaustive: adding a third outcome later is a
 compile error until every caller handles it. That's the whole argument
 for sealed result types over sentinel values like `-1`.
+
+---
+
+## 18. Expense tracking + net earnings (schema migration v2)
+
+**Flutter/Dart concepts: `sqflite` schema migrations, first real schema
+change on live data, sealed unions in the UI. Domain concept: gross is
+half the picture.**
+
+Gross earnings flatter a taxi driver; fuel eats a third of it. This
+step adds the `expenses` table (session-scoped like payments, integer
+cents, `CHECK (amount_cents > 0)`, category `fuel`/`other`) and threads
+**net = gross − expenses** through every surface that showed gross:
+the live card, the shift summary, and the dashboard window.
+
+### The migration
+
+`schemaVersion` goes to 2, and the schema code now has three parts:
+`createSchema(db, version)` (which the migration test also uses to
+*build* an old database), `_createExpenseTable` (shared by create and
+upgrade), and `upgradeSchema`:
+
+```dart
+static Future<void> upgradeSchema(Database db, int from, int to) async {
+  if (from < 2) await _createExpenseTable(db);
+}
+```
+
+The rule that matters: **`onCreate` and `onUpgrade` must produce the
+same shape.** A fresh install runs `createSchema` at v2; an updating
+phone runs `createSchema` at v1 (a year ago) then `upgradeSchema(1→2)`
+today — and both must end up identical, which is only provable by
+testing both paths. Hence `test/db_migration_test.dart` opens a *real
+file-backed* database at version 1, writes rows, closes it, reopens at
+version 2 through `onUpgrade`, and asserts three things: old payments
+survived byte-for-value (`TX-OLD` still carries its balance), the new
+table accepts and enforces its rules, and opening again at the same
+version is a no-op. That test is the only thing standing between the
+users' history and an `SQLITE_ERROR: no such table`.
+
+### Gross vs net, without a second state system
+
+`SessionProvider` gains an `_expenses` list loaded in the *same*
+`_reloadActive()` (one more query on a path that already runs), plus
+`netCents` as a one-line getter — no new provider, no new stream, the
+same "DB is truth" reload absorbs it. `DashboardProvider` adds one
+`totalCentsBetween` call for the window. The UI rule applied
+everywhere: **net only appears when it differs from gross** (`if
+expenseTotalCents > 0`), so a cash-only day reads clean and a fueled-up
+day says "Expenses: 120.00 · Net: 330.00".
+
+### One timeline, two row types
+
+The feed now interleaves payments and expenses newest-first. Instead of
+a shared base class (they aren't the same concept — one adds, one
+subtracts), a tiny sealed union:
+
+```dart
+sealed class FeedItem {
+  int get timestampMs; // the merge/sort key
+}
+class FeedPayment extends FeedItem { ... }
+class FeedExpense extends FeedItem { ... }
+```
+
+so the `ListView.builder` is an exhaustive `switch` — a new feed item
+type can't silently render as nothing. `ExpenseTile` is `PaymentTile`'s
+visual opposite: tertiary container, fuel-pump icon, amount prefixed
+with `−` in the error color.
+
+The expense sheet mirrors the cash sheet's parse-at-the-keyboard rules
+plus a `SegmentedButton` for category (fuel preselected — it's the 90%
+case, and the live card's third button is labeled **Fuel** for the
+same reason) and an optional note that collapses to null when blank.
+Expenses stay immutable in v1; if corrections become real, the cash
+edit machinery (step 17) is the template.
 
 ---
 

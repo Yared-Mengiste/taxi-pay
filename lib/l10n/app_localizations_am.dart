@@ -67,6 +67,37 @@ class AppLocalizationsAm extends AppLocalizations {
   }
 
   @override
+  String get actionFuel => 'ነዳጅ';
+
+  @override
+  String get expenseFuel => 'ነዳጅ';
+
+  @override
+  String get expenseOther => 'ሌላ';
+
+  @override
+  String get expenseSheetTitle => 'ወጪ ያስገቡ';
+
+  @override
+  String get expenseSheetBody => 'የነዳጅ እና ሌሎች ወጪዎች ከስራው ትርፍ ይቀነሳሉ።';
+
+  @override
+  String get expenseNoteLabel => 'ማስታወሻ (አማራጭ)';
+
+  @override
+  String get expenseNoteHint => 'ለምሳሌ ሙሉ ማጠራረብ';
+
+  @override
+  String expensesLabel(Object amount) {
+    return 'ወጪ፦ $amount';
+  }
+
+  @override
+  String netLabel(Object amount) {
+    return 'ትርፍ፦ $amount';
+  }
+
+  @override
   String get cashSheetTitle => 'የጥሬ ገንዘብ ክፍያ ያስገቡ';
 
   @override

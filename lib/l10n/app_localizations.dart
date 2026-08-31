@@ -176,6 +176,60 @@ abstract class AppLocalizations {
   /// **'Wallet: {amount}'**
   String walletBalance(Object amount);
 
+  /// No description provided for @actionFuel.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel'**
+  String get actionFuel;
+
+  /// No description provided for @expenseFuel.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel'**
+  String get expenseFuel;
+
+  /// No description provided for @expenseOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get expenseOther;
+
+  /// No description provided for @expenseSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an expense'**
+  String get expenseSheetTitle;
+
+  /// No description provided for @expenseSheetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel and other running costs are subtracted from the session\'s net earnings.'**
+  String get expenseSheetBody;
+
+  /// No description provided for @expenseNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (optional)'**
+  String get expenseNoteLabel;
+
+  /// No description provided for @expenseNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. full tank'**
+  String get expenseNoteHint;
+
+  /// No description provided for @expensesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses: {amount}'**
+  String expensesLabel(Object amount);
+
+  /// No description provided for @netLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Net: {amount}'**
+  String netLabel(Object amount);
+
   /// No description provided for @cashSheetTitle.
   ///
   /// In en, this message translates to:

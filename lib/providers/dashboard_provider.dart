@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../data/db/expense_repository.dart';
 import '../data/db/payment_repository.dart';
 import '../models/payment.dart';
 import '../util/dates.dart';
@@ -37,13 +38,19 @@ class RevenueBucket {
 /// at (one `GROUP BY day` query); Dart does what Dart is good at (calendar
 /// math and zero-filling the chart buckets).
 class DashboardProvider extends ChangeNotifier {
-  DashboardProvider(this._repo);
+  DashboardProvider({
+    required PaymentRepository payments,
+    required ExpenseRepository expenses,
+  })  : _paymentsRepo = payments,
+        _expensesRepo = expenses;
 
-  final PaymentRepository _repo;
+  final PaymentRepository _paymentsRepo;
+  final ExpenseRepository _expensesRepo;
 
   DashboardPeriod _period = DashboardPeriod.day;
   List<RevenueBucket> _buckets = const [];
   Map<PaymentMethod, BucketTotal> _byMethod = const {};
+  int _expenseTotalCents = 0;
   bool _loading = false;
 
   DashboardPeriod get period => _period;
@@ -54,6 +61,13 @@ class DashboardProvider extends ChangeNotifier {
   Map<PaymentMethod, BucketTotal> get byMethod => _byMethod;
 
   bool get loading => _loading;
+
+  /// Window expense total (fuel and other) — the other half of the story
+  /// the gross total tells.
+  int get expenseTotalCents => _expenseTotalCents;
+
+  /// Gross minus expenses: what the window actually earned the driver.
+  int get netCents => totalCents - _expenseTotalCents;
 
   int get totalCents =>
       _buckets.fold(0, (sum, b) => sum + b.totalCents);
@@ -95,11 +109,15 @@ class DashboardProvider extends ChangeNotifier {
     final to = _endOf(now);
 
     // One grouped query for the whole window, then bucket in Dart.
-    final daily = await _repo.dailyTotals(
+    final daily = await _paymentsRepo.dailyTotals(
       from.millisecondsSinceEpoch,
       to.millisecondsSinceEpoch,
     );
-    final byMethod = await _repo.totalsByMethod(
+    final byMethod = await _paymentsRepo.totalsByMethod(
+      from.millisecondsSinceEpoch,
+      to.millisecondsSinceEpoch,
+    );
+    final expenseTotal = await _expensesRepo.totalCentsBetween(
       from.millisecondsSinceEpoch,
       to.millisecondsSinceEpoch,
     );
@@ -127,6 +145,7 @@ class DashboardProvider extends ChangeNotifier {
         ),
     ];
     _byMethod = byMethod;
+    _expenseTotalCents = expenseTotal;
     _loading = false;
     notifyListeners();
   }

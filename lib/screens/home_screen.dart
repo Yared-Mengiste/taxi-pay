@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/l10n.dart';
+import '../models/feed_item.dart';
 import '../models/payment.dart';
 import '../providers/session_provider.dart';
 import '../services/backup_service.dart';
 import '../util/dates.dart';
 import '../util/money.dart';
 import '../widgets/add_cash_sheet.dart';
+import '../widgets/add_expense_sheet.dart';
 import '../widgets/edit_cash_sheet.dart';
+import '../widgets/expense_tile.dart';
 import '../widgets/payment_tile.dart';
 
 /// The one screen a driver uses mid-shift: the session control, the live
@@ -188,6 +191,8 @@ class _IdleView extends StatelessWidget {
             startedAtMs: lastEnded.startedAtMs,
             endedAtMs: lastEnded.endedAtMs ?? lastEnded.startedAtMs,
             totalCents: session.lastEndedTotalCents,
+            expenseTotalCents: session.lastEndedExpenseTotalCents,
+            netCents: session.lastEndedNetCents,
             paymentCount: session.lastEndedPayments.length,
           ),
         const SizedBox(height: 24),
@@ -287,12 +292,16 @@ class _ShiftSummaryCard extends StatelessWidget {
     required this.startedAtMs,
     required this.endedAtMs,
     required this.totalCents,
+    required this.expenseTotalCents,
+    required this.netCents,
     required this.paymentCount,
   });
 
   final int startedAtMs;
   final int endedAtMs;
   final int totalCents;
+  final int expenseTotalCents;
+  final int netCents;
   final int paymentCount;
 
   @override
@@ -324,6 +333,17 @@ class _ShiftSummaryCard extends StatelessWidget {
                   .headlineLarge
                   ?.copyWith(fontWeight: FontWeight.w800),
             ),
+            if (expenseTotalCents > 0) ...[
+              const SizedBox(height: 4),
+              Text(
+                '${l10n.expensesLabel(formatBirr(expenseTotalCents))} · '
+                '${l10n.netLabel(formatBirr(netCents))}',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: scheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+            ],
             Text(
               '${l10n.paymentsCount(paymentCount)} · ${formatDuration(startedAtMs, endedAtMs)}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -394,6 +414,18 @@ class _LiveSessionView extends StatelessWidget {
                           color: scheme.onPrimaryContainer,
                         ),
                   ),
+                  if (session.expenseTotalCents > 0) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      '${l10n.expensesLabel(formatBirr(session.expenseTotalCents))} · '
+                      '${l10n.netLabel(formatBirr(session.netCents))}',
+                      style:
+                          Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: scheme.onPrimaryContainer,
+                                fontWeight: FontWeight.w700,
+                              ),
+                    ),
+                  ],
                   if (session.walletBalanceCents != null) ...[
                     const SizedBox(height: 4),
                     _WalletBadge(
@@ -406,12 +438,20 @@ class _LiveSessionView extends StatelessWidget {
                     children: [
                       Expanded(
                         child: FilledButton.tonalIcon(
+                          onPressed: () => promptAndAddExpense(context),
+                          icon: const Icon(Icons.local_gas_station_rounded),
+                          label: Text(l10n.actionFuel),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: FilledButton.tonalIcon(
                           onPressed: () => promptAndAddCash(context),
                           icon: const Icon(Icons.payments_rounded),
                           label: Text(l10n.actionCash),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: FilledButton.icon(
                           onPressed: () =>
@@ -444,23 +484,28 @@ class _PaymentFeed extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final payments = session.payments;
-    if (payments.isEmpty) {
+    if (session.payments.isEmpty && session.expenses.isEmpty) {
       return _EmptyFeed(onAddCash: () => promptAndAddCash(context));
     }
+    // One timeline: money in and money out interleaved, newest first —
+    // the shift's actual story.
+    final items = <FeedItem>[
+      ...session.payments.map(FeedItem.payment),
+      ...session.expenses.map(FeedItem.expense),
+    ]..sort((a, b) => b.timestampMs.compareTo(a.timestampMs));
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(8, 4, 8, 16),
-      itemCount: payments.length,
-      itemBuilder: (context, index) {
-        final payment = payments[index];
-        return PaymentTile(
-          payment: payment,
-          // Cash is the driver's own entry — fixable. SMS rows stay
-          // immutable (they're the receipts).
-          onEdit: payment.method == PaymentMethod.cash
-              ? () => promptAndEditCash(context, payment: payment)
-              : null,
-        );
+      itemCount: items.length,
+      itemBuilder: (context, index) => switch (items[index]) {
+        FeedPayment(:final payment) => PaymentTile(
+            payment: payment,
+            // Cash is the driver's own entry — fixable. SMS rows stay
+            // immutable (they're the receipts).
+            onEdit: payment.method == PaymentMethod.cash
+                ? () => promptAndEditCash(context, payment: payment)
+                : null,
+          ),
+        FeedExpense(:final expense) => ExpenseTile(expense: expense),
       },
     );
   }

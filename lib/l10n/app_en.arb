@@ -21,6 +21,26 @@
     }
   },
 
+  "actionFuel": "Fuel",
+  "expenseFuel": "Fuel",
+  "expenseOther": "Other",
+  "expenseSheetTitle": "Add an expense",
+  "expenseSheetBody": "Fuel and other running costs are subtracted from the session's net earnings.",
+  "expenseNoteLabel": "Note (optional)",
+  "expenseNoteHint": "e.g. full tank",
+  "expensesLabel": "Expenses: {amount}",
+  "netLabel": "Net: {amount}",
+  "@expensesLabel": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "@netLabel": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+
   "cashSheetTitle": "Add a cash fare",
   "cashSheetBody": "Cash fares join the same session total as teleBirr payments.",
   "cashAmountLabel": "Amount in birr",

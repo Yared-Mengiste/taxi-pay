@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:taxi_pay/data/db/app_database.dart';
+import 'package:taxi_pay/data/db/expense_repository.dart';
 import 'package:taxi_pay/data/db/payment_repository.dart';
 import 'package:taxi_pay/data/db/session_repository.dart';
+import 'package:taxi_pay/models/expense.dart';
 import 'package:taxi_pay/models/payment.dart';
 import 'package:taxi_pay/providers/dashboard_provider.dart';
 
@@ -15,13 +17,15 @@ void main() {
   late AppDatabase app;
   late SessionRepository sessions;
   late PaymentRepository payments;
+  late ExpenseRepository expenses;
   late DashboardProvider dashboard;
 
   setUp(() async {
     app = await AppDatabase.openInMemory();
     sessions = SessionRepository(app);
     payments = PaymentRepository(app);
-    dashboard = DashboardProvider(payments);
+    expenses = ExpenseRepository(app);
+    dashboard = DashboardProvider(payments: payments, expenses: expenses);
   });
 
   tearDown(() async {
@@ -142,5 +146,47 @@ void main() {
     expect(dashboard.hasRevenue, false);
     expect(dashboard.buckets.length, 7);
     expect(dashboard.totalCents, 0);
+    expect(dashboard.expenseTotalCents, 0);
+    expect(dashboard.netCents, 0);
+  });
+
+  test('expenses in the window subtract from net', () async {
+    final now = DateTime.now();
+    final session = await sessions.startSession();
+    await payments.insertTelebirrPaymentIfMissing(Payment(
+      transactionId: 'TX1',
+      sessionId: session.id,
+      method: PaymentMethod.telebirr,
+      amountCents: 30000,
+      smsTimestampMs: now.millisecondsSinceEpoch,
+      createdAtMs: now.millisecondsSinceEpoch,
+    ));
+    await sessions.stopSession();
+
+    // Fuel from 8 days ago (outside the window) and today's other
+    // expense — only today's 5000 is in the last-7-days window.
+    final session2 = await sessions.startSession();
+    await expenses.addExpense(
+      sessionId: session2.id,
+      amountCents: 12000,
+      category: ExpenseCategory.fuel,
+      note: 'full tank',
+      timestampMs: now
+          .subtract(const Duration(days: 8))
+          .millisecondsSinceEpoch,
+    );
+    await expenses.addExpense(
+      sessionId: session2.id,
+      amountCents: 5000,
+      category: ExpenseCategory.other,
+      timestampMs: now.millisecondsSinceEpoch,
+    );
+    await sessions.stopSession();
+
+    await dashboard.reload();
+
+    expect(dashboard.totalCents, 30000);
+    expect(dashboard.expenseTotalCents, 5000);
+    expect(dashboard.netCents, 25000);
   });
 }

@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:taxi_pay/data/db/app_database.dart';
+import 'package:taxi_pay/data/db/expense_repository.dart';
 import 'package:taxi_pay/data/db/payment_repository.dart';
 import 'package:taxi_pay/data/db/session_repository.dart';
+import 'package:taxi_pay/models/expense.dart';
 import 'package:taxi_pay/models/payment.dart';
 import 'package:taxi_pay/providers/session_provider.dart';
 
@@ -55,6 +57,39 @@ void main() {
     expect(provider.lastEndedSession!.endedAtMs, isNotNull);
     expect(provider.lastEndedTotalCents, 7500);
     expect(provider.lastEndedPayments, hasLength(2));
+  });
+
+  test('expenses subtract from net and survive into the shift summary',
+      () async {
+    await provider.load();
+    await provider.start();
+
+    await provider.addCash(amountCents: 10000);
+    await provider.addExpense(
+        amountCents: 6000, category: ExpenseCategory.fuel, note: 'fuel');
+    await provider.addExpense(amountCents: 1500, category: ExpenseCategory.other);
+
+    expect(provider.totalCents, 10000);
+    expect(provider.expenseTotalCents, 7500);
+    expect(provider.netCents, 2500);
+    expect(provider.expenses, hasLength(2));
+    // Newest first, same rule as payments.
+    expect(provider.expenses.first.category, ExpenseCategory.other);
+
+    await provider.stop();
+    expect(provider.lastEndedExpenseTotalCents, 7500);
+    expect(provider.lastEndedNetCents, 2500);
+    expect(provider.lastEndedExpenses, hasLength(2));
+
+    // A fresh reload from the DB (cold start) finds expenses too.
+    await provider.load();
+    expect(provider.isRunning, isFalse);
+    expect(provider.expenses, isEmpty);
+    expect(
+      await ExpenseRepository(db)
+          .totalCentsForSession(provider.lastEndedSession!.id),
+      7500,
+    );
   });
 
   test('captured payment stream triggers a reload', () async {

@@ -70,6 +70,38 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get actionFuel => 'Fuel';
+
+  @override
+  String get expenseFuel => 'Fuel';
+
+  @override
+  String get expenseOther => 'Other';
+
+  @override
+  String get expenseSheetTitle => 'Add an expense';
+
+  @override
+  String get expenseSheetBody =>
+      'Fuel and other running costs are subtracted from the session\'s net earnings.';
+
+  @override
+  String get expenseNoteLabel => 'Note (optional)';
+
+  @override
+  String get expenseNoteHint => 'e.g. full tank';
+
+  @override
+  String expensesLabel(Object amount) {
+    return 'Expenses: $amount';
+  }
+
+  @override
+  String netLabel(Object amount) {
+    return 'Net: $amount';
+  }
+
+  @override
   String get cashSheetTitle => 'Add a cash fare';
 
   @override

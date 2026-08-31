@@ -21,6 +21,26 @@
     }
   },
 
+  "actionFuel": "ነዳጅ",
+  "expenseFuel": "ነዳጅ",
+  "expenseOther": "ሌላ",
+  "expenseSheetTitle": "ወጪ ያስገቡ",
+  "expenseSheetBody": "የነዳጅ እና ሌሎች ወጪዎች ከስራው ትርፍ ይቀነሳሉ።",
+  "expenseNoteLabel": "ማስታወሻ (አማራጭ)",
+  "expenseNoteHint": "ለምሳሌ ሙሉ ማጠራረብ",
+  "expensesLabel": "ወጪ፦ {amount}",
+  "netLabel": "ትርፍ፦ {amount}",
+  "@expensesLabel": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "@netLabel": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+
   "cashSheetTitle": "የጥሬ ገንዘብ ክፍያ ያስገቡ",
   "cashSheetBody": "የጥሬ ገንዘብ ክፍያዎች ከተሌቢር ክፍያዎች ጋር በተመሳሳይ ድምር ይታሰባሉ።",
   "cashAmountLabel": "መጠን በብር",

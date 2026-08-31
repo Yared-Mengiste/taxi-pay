@@ -193,6 +193,27 @@ class _SummaryCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (dashboard.expenseTotalCents > 0) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(Icons.local_gas_station_rounded,
+                      size: 18, color: scheme.onPrimaryContainer),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${l10n.expensesLabel(formatBirr(dashboard.expenseTotalCents))} · '
+                      '${l10n.netLabel(formatBirr(dashboard.netCents))}',
+                      style:
+                          Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: scheme.onPrimaryContainer,
+                                fontWeight: FontWeight.w700,
+                              ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

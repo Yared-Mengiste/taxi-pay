@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'data/db/app_database.dart';
+import 'data/db/expense_repository.dart';
 import 'data/db/payment_repository.dart';
 import 'data/sms/sms_service.dart';
 import 'l10n/app_localizations.dart';
@@ -146,8 +147,10 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
                   )..load(),
                 ),
                 ChangeNotifierProvider(
-                  create: (_) =>
-                      DashboardProvider(PaymentRepository(widget.app))..load(),
+                  create: (_) => DashboardProvider(
+                    payments: PaymentRepository(widget.app),
+                    expenses: ExpenseRepository(widget.app),
+                  )..load(),
                 ),
               ],
               child: _HomeShell(
