@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/l10n.dart';
 import '../providers/session_provider.dart';
 import '../util/dates.dart';
 import '../util/money.dart';
@@ -10,7 +11,14 @@ import '../widgets/payment_tile.dart';
 /// The one screen a driver uses mid-shift: the session control, the live
 /// total and the feed of incoming payments. Reachable one tap after launch.
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({
+    super.key,
+    this.languageCode,
+    this.onLanguageChanged,
+  });
+
+  final String? languageCode;
+  final Future<void> Function(String? code)? onLanguageChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +26,18 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Taxi Pay'),
         centerTitle: false,
+        actions: [
+          if (onLanguageChanged != null)
+            IconButton(
+              tooltip: context.l10n.languageTitle,
+              onPressed: () => showLanguageSheet(
+                context,
+                current: languageCode,
+                onSelected: onLanguageChanged!,
+              ),
+              icon: const Icon(Icons.translate_rounded),
+            ),
+        ],
       ),
       body: Consumer<SessionProvider>(
         builder: (context, session, _) => session.isRunning
@@ -26,6 +46,52 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Language picker — Amharic is the primary language, English secondary.
+Future<void> showLanguageSheet(
+  BuildContext context, {
+  required String? current,
+  required Future<void> Function(String? code) onSelected,
+}) {
+  final l10n = context.l10n;
+  return showModalBottomSheet<void>(
+    context: context,
+    builder: (sheetContext) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(l10n.languageTitle,
+                style: Theme.of(sheetContext).textTheme.titleMedium),
+          ),
+          RadioGroup<String?>(
+            groupValue: current,
+            onChanged: (value) {
+              Navigator.of(sheetContext).pop();
+              onSelected(value);
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final (code, label) in [
+                  (null, l10n.languageSystem),
+                  ('am', l10n.languageAmharic),
+                  ('en', l10n.languageEnglish),
+                ])
+                  RadioListTile<String?>(
+                    value: code,
+                    title: Text(label),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    ),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -82,7 +148,7 @@ class _StartButton extends StatelessWidget {
                 children: [
                   const Icon(Icons.play_arrow_rounded, size: 56),
                   Text(
-                    'START',
+                    context.l10n.homeStart,
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
@@ -94,7 +160,7 @@ class _StartButton extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Ready to work? Start a session to track teleBirr payments.',
+            context.l10n.homeIdleHint,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
@@ -121,6 +187,7 @@ class _ShiftSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     return Card(
       color: scheme.surfaceContainerHighest,
@@ -134,7 +201,7 @@ class _ShiftSummaryCard extends StatelessWidget {
                 Icon(Icons.flag_circle_rounded, color: scheme.primary),
                 const SizedBox(width: 8),
                 Text(
-                  'Shift finished',
+                  context.l10n.shiftFinished,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ],
@@ -148,7 +215,7 @@ class _ShiftSummaryCard extends StatelessWidget {
                   ?.copyWith(fontWeight: FontWeight.w800),
             ),
             Text(
-              '$paymentCount payments · ${formatDuration(startedAtMs, endedAtMs)}',
+              '${l10n.paymentsCount(paymentCount)} · ${formatDuration(startedAtMs, endedAtMs)}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
@@ -171,6 +238,7 @@ class _LiveSessionView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -190,7 +258,8 @@ class _LiveSessionView extends StatelessWidget {
                           size: 16, color: scheme.onPrimaryContainer),
                       const SizedBox(width: 6),
                       Text(
-                        'LIVE · since ${formatClock(session.activeSession!.startedAtMs)}',
+                        l10n.liveSince(
+                            formatClock(session.activeSession!.startedAtMs)),
                         style: Theme.of(context).textTheme.labelMedium?.copyWith(
                               color: scheme.onPrimaryContainer,
                               letterSpacing: 1.2,
@@ -208,7 +277,7 @@ class _LiveSessionView extends StatelessWidget {
                         ),
                   ),
                   Text(
-                    '${session.paymentCount} payments this session',
+                    l10n.paymentsThisSession(session.paymentCount),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: scheme.onPrimaryContainer,
                         ),
@@ -220,7 +289,7 @@ class _LiveSessionView extends StatelessWidget {
                         child: FilledButton.tonalIcon(
                           onPressed: () => promptAndAddCash(context),
                           icon: const Icon(Icons.payments_rounded),
-                          label: const Text('Cash'),
+                          label: Text(l10n.actionCash),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -233,7 +302,7 @@ class _LiveSessionView extends StatelessWidget {
                             foregroundColor: scheme.onErrorContainer,
                           ),
                           icon: const Icon(Icons.stop_circle_rounded),
-                          label: const Text('Stop'),
+                          label: Text(l10n.actionStop),
                         ),
                       ),
                     ],
@@ -276,6 +345,7 @@ class _EmptyFeed extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
@@ -286,13 +356,12 @@ class _EmptyFeed extends StatelessWidget {
             Icon(Icons.sms_outlined, size: 56, color: scheme.outline),
             const SizedBox(height: 16),
             Text(
-              'Waiting for teleBirr payments…',
+              l10n.feedWaitingTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              'Payments sent to your phone appear here instantly.\n'
-              'Passengers paying cash? Log it below.',
+              l10n.feedWaitingBody,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: scheme.onSurfaceVariant,
@@ -302,7 +371,7 @@ class _EmptyFeed extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: onAddCash,
               icon: const Icon(Icons.payments_outlined),
-              label: const Text('Add cash fare'),
+              label: Text(l10n.feedAddCash),
             ),
           ],
         ),

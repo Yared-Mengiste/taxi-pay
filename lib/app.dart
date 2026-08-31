@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'data/db/app_database.dart';
 import 'data/db/payment_repository.dart';
 import 'data/sms/sms_service.dart';
+import 'l10n/app_localizations.dart';
+import 'l10n/l10n.dart';
 import 'providers/dashboard_provider.dart';
 import 'providers/session_provider.dart';
 import 'screens/dashboard_screen.dart';
@@ -35,9 +37,13 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
   final BackgroundTaskService _backgroundTasks = BackgroundTaskService();
   bool _reconciling = false;
 
+  /// Explicit user language choice, or null = follow the system locale.
+  String? _languageCode;
+
   @override
   void initState() {
     super.initState();
+    _languageCode = widget.settings.languageCode;
     WidgetsBinding.instance.addObserver(this);
     // Re-arm the SMS listener on every launch. Cheap and idempotent — and it
     // guarantees the background handler handle is (re)registered with the
@@ -73,11 +79,22 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _setLanguage(String? code) async {
+    await widget.settings.setLanguageCode(code);
+    if (!mounted) return;
+    setState(() => _languageCode = code);
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Taxi Pay',
+      onGenerateTitle: (context) => 'Taxi Pay',
       theme: ThemeData(useMaterial3: true),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      // Amharic first: an unsupported device locale resolves to am, not en —
+      // Amharic is the primary language of this app.
+      supportedLocales: const [Locale('am'), Locale('en')],
+      locale: _languageCode == null ? null : Locale(_languageCode!),
       home: widget.settings.isOnboarded
           ? MultiProvider(
               providers: [
@@ -95,6 +112,8 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
               child: _HomeShell(
                 exporter:
                     CsvExportService(PaymentRepository(widget.app)),
+                languageCode: _languageCode,
+                onLanguageChanged: _setLanguage,
               ),
             )
           : OnboardingScreen(
@@ -109,9 +128,15 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
 /// widget, so switching tabs never destroys session state, and an
 /// [IndexedStack] keeps both trees alive (scroll position, chart state).
 class _HomeShell extends StatefulWidget {
-  const _HomeShell({required this.exporter});
+  const _HomeShell({
+    required this.exporter,
+    required this.languageCode,
+    required this.onLanguageChanged,
+  });
 
   final CsvExportService exporter;
+  final String? languageCode;
+  final Future<void> Function(String? code) onLanguageChanged;
 
   @override
   State<_HomeShell> createState() => _HomeShellState();
@@ -122,11 +147,15 @@ class _HomeShellState extends State<_HomeShell> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       body: IndexedStack(
         index: _index,
         children: [
-          const HomeScreen(),
+          HomeScreen(
+            languageCode: widget.languageCode,
+            onLanguageChanged: widget.onLanguageChanged,
+          ),
           DashboardScreen(exporter: widget.exporter),
         ],
       ),
@@ -140,16 +169,16 @@ class _HomeShellState extends State<_HomeShell> {
             context.read<DashboardProvider>().reload();
           }
         },
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.sensors_rounded),
-            selectedIcon: Icon(Icons.sensors_rounded),
-            label: 'Session',
+            icon: const Icon(Icons.sensors_rounded),
+            selectedIcon: const Icon(Icons.sensors_rounded),
+            label: l10n.navSession,
           ),
           NavigationDestination(
-            icon: Icon(Icons.bar_chart_rounded),
-            selectedIcon: Icon(Icons.bar_chart_rounded),
-            label: 'Dashboard',
+            icon: const Icon(Icons.bar_chart_rounded),
+            selectedIcon: const Icon(Icons.bar_chart_rounded),
+            label: l10n.navDashboard,
           ),
         ],
       ),

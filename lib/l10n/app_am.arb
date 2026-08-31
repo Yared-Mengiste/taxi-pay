@@ -1,0 +1,76 @@
+{
+  "@@locale": "am",
+
+  "navSession": "የስራ ጊዜ",
+  "navDashboard": "ሪፖርት",
+
+  "homeStart": "ጀምር",
+  "homeIdleHint": "ለስራ ዝግጁ? የተሌቢር ክፍያዎችን ለመከታተል ክፍለ ጊዜ ይጀምሩ።",
+  "shiftFinished": "ስራው አለቀ",
+  "paymentsCount": "{count, plural, other{{count} ክፍያ}}",
+  "liveSince": "በሂደት ላይ · ከ{time} ጀምሮ",
+  "paymentsThisSession": "{count, plural, other{በዚህ ክፍለ ጊዜ {count} ክፍያ}}",
+  "actionCash": "ጥሬ ገንዘብ",
+  "actionStop": "አቁም",
+  "cashFare": "የጥሬ ገንዘብ ክፍያ",
+  "telebirrPayment": "የተሌቢር ክፍያ",
+
+  "cashSheetTitle": "የጥሬ ገንዘብ ክፍያ ያስገቡ",
+  "cashSheetBody": "የጥሬ ገንዘብ ክፍያዎች ከተሌቢር ክፍያዎች ጋር በተመሳሳይ ድምር ይታሰባሉ።",
+  "cashAmountLabel": "መጠን በብር",
+  "cashAmountHint": "ለምሳሌ 150",
+  "cashAdd": "ጨምር",
+
+  "feedWaitingTitle": "የተሌቢር ክፍያዎችን በመጠበቅ ላይ…",
+  "feedWaitingBody": "ወደ ስልክዎ የተላኩ ክፍያዎች ወዲያውኑ እዚህ ይታያሉ።\nበጥሬ ገንዘብ የሚከፈል ከሆነ? ከታች ያስገቡ።",
+  "feedAddCash": "የጥሬ ገንዘብ ክፍያ ያስገቡ",
+
+  "languageTitle": "ቋንቋ",
+  "languageSystem": "የስርዓቱ ነባሪ",
+  "languageAmharic": "አማርኛ",
+  "languageEnglish": "English",
+
+  "dashboardTitle": "ሪፖርት",
+  "periodDaily": "ዕለታዊ",
+  "periodWeekly": "ሳምንታዊ",
+  "periodMonthly": "ወርሃዊ",
+  "window7Days": "ያለፉት 7 ቀናት",
+  "window8Weeks": "ያለፉት 8 ሳምንታት",
+  "window12Months": "ያለፉት 12 ወራት",
+  "perDay": "ቀን",
+  "perWeek": "ሳምንት",
+  "perMonth": "ወር",
+  "avgPerPeriod": "በአማካይ {amount} / {period}",
+  "dashboardEmptyTitle": "በዚህ ጊዜ ገቢ አልተመዘገበም",
+  "dashboardEmptyBody": "ክፍለ ጊዜ ይጀምሩና ክፍያዎችን ይቀበሉ — ዕለታዊ፣ ሳምንታዊ እና\nወርሃዊ ድምሮች እዚህ በግራፍ ይታያሉ።",
+
+  "exportTooltip": "CSV ላክ",
+  "exportEmpty": "በዚህ ጊዜ ለማንሳት ክፍያ የለም።",
+  "exportDone": "{count, plural, other{{count} ክፍያዎችን በCSV ላከ።}}",
+
+  "onbWelcomeTitle": "እንኳን ወደ ታክሲ ፔይ በደህና መጡ",
+  "onbWelcomeBody": "በስራ ጊዜ የተላኩትን የተሌቢር ክፍያዎች እና የጥሬ ገንዘብ ክፍያዎችዎን በአንድነት ይከታተሉ — በዕለት፣ በሳምንት እና በወር ድምሮች።",
+  "onbGetStarted": "ጀምር",
+
+  "onbSmsTitle": "የኤስኤምኤስ ፈቃድ ይፍቁ",
+  "onbSmsGrantedTitle": "የኤስኤምኤስ ፈቃድ ተሰጠ",
+  "onbSmsBody": "ታክሲ ፔይ ከ127 ቁጥር የሚላኩትን የተሌቢር የክፍያ ማረገጫዎች ብቻ ያነባል። ሌላ መልእክት በጭራሽ አይነበብም አይቀመጥም።",
+  "onbContinue": "ቀጥል",
+
+  "onbRestrictedTitle": "አንድሮይድ ጥያቄውን ከለከለ",
+  "onbRestrictedBody": "ከፕሌይ ስቶር ውጭ ከተተከሉ መተግበሪያዎች ፈቃዱ እርስዎ እስክወስኑት ድረስ ተደብቋል። ይህን ያድርጉ:",
+  "onbStep1": "ከታች ቅንብሮችን ይክፈቱ (ወይም የታክሲ ፔይ ምልክትን በረጅም ተጭነው → የመተግበሪያ መረጃ)",
+  "onbStep2": "በላይ በቀኝ ባለው ⋮ ምናሌ ይንኩ",
+  "onbStep3": "\"የተገደቡ ቅንብሮችን ፍቁ\" የሚለውን ይንኩ",
+  "onbStep4": "ወደነበሩበት ተመልሰው \"እንደገና ይፈትሹ\" የሚለውን ይንኩ",
+  "onbOpenSettings": "ቅንብሮችን ክፈት",
+  "onbCheckAgain": "እንደገና ይፈትሹ",
+
+  "onbBatteryTitle": "በጀርባ ላይ ንቁ ይሁኑ",
+  "onbBatteryOkTitle": "የባትሪ ቆጣቢ ጠፍቷል",
+  "onbBatteryBody": "ባትሪ ለመቆጠብ አንድሮይድ በጀርባ ያሉ መተግበሪያዎችን ሊያገዳ ይችላል — ስክሪኑ ሲጠፋ ክፍያዎች እንዳይመዘገቡ ሊያዘጋጅ ይችላል። ታክሲ ፔይን መፍቀድ በስራ ጊዜ አዳማጹን ንቃት ላይ ይይዛል።",
+  "onbAllowBackground": "በጀርባ ላይ ፍቀድ",
+  "onbAllSet": "ሁሉም ዝግጁ ነው",
+  "onbSkip": "አሁን ይተዉ",
+  "onbFinish": "ጨርስ"
+}

@@ -1,0 +1,76 @@
+{
+  "@@locale": "en",
+
+  "navSession": "Session",
+  "navDashboard": "Dashboard",
+
+  "homeStart": "START",
+  "homeIdleHint": "Ready to work? Start a session to track teleBirr payments.",
+  "shiftFinished": "Shift finished",
+  "paymentsCount": "{count, plural, =1{{count} payment} other{{count} payments}}",
+  "liveSince": "LIVE · since {time}",
+  "paymentsThisSession": "{count, plural, =1{{count} payment this session} other{{count} payments this session}}",
+  "actionCash": "Cash",
+  "actionStop": "Stop",
+  "cashFare": "Cash fare",
+  "telebirrPayment": "teleBirr payment",
+
+  "cashSheetTitle": "Add a cash fare",
+  "cashSheetBody": "Cash fares join the same session total as teleBirr payments.",
+  "cashAmountLabel": "Amount in birr",
+  "cashAmountHint": "e.g. 150",
+  "cashAdd": "Add",
+
+  "feedWaitingTitle": "Waiting for teleBirr payments…",
+  "feedWaitingBody": "Payments sent to your phone appear here instantly.\nPassengers paying cash? Log it below.",
+  "feedAddCash": "Add cash fare",
+
+  "languageTitle": "Language",
+  "languageSystem": "System default",
+  "languageAmharic": "አማርኛ",
+  "languageEnglish": "English",
+
+  "dashboardTitle": "Dashboard",
+  "periodDaily": "Daily",
+  "periodWeekly": "Weekly",
+  "periodMonthly": "Monthly",
+  "window7Days": "Last 7 days",
+  "window8Weeks": "Last 8 weeks",
+  "window12Months": "Last 12 months",
+  "perDay": "day",
+  "perWeek": "week",
+  "perMonth": "month",
+  "avgPerPeriod": "{amount} avg / {period}",
+  "dashboardEmptyTitle": "No revenue in this period yet",
+  "dashboardEmptyBody": "Start a session and take payments — daily, weekly and\nmonthly totals will show up here as bar charts.",
+
+  "exportTooltip": "Export CSV",
+  "exportEmpty": "No payments in this period to export.",
+  "exportDone": "{count, plural, =1{Exported {count} payment as CSV.} other{Exported {count} payments as CSV.}}",
+
+  "onbWelcomeTitle": "Welcome to Taxi Pay",
+  "onbWelcomeBody": "Track the teleBirr payments passengers send you during a shift, plus your cash fares — with daily, weekly and monthly totals.",
+  "onbGetStarted": "Get started",
+
+  "onbSmsTitle": "Allow SMS access",
+  "onbSmsGrantedTitle": "SMS access granted",
+  "onbSmsBody": "Taxi Pay reads the payment confirmations teleBirr sends from short code 127. No other messages are ever read or stored.",
+  "onbContinue": "Continue",
+
+  "onbRestrictedTitle": "Android blocked the request",
+  "onbRestrictedBody": "For apps installed outside the Play Store, Android hides the permission dialog until you allow it once. Do this:",
+  "onbStep1": "Open Settings below (or long-press the Taxi Pay icon → App info)",
+  "onbStep2": "Tap the ⋮ menu at the top right",
+  "onbStep3": "Tap \"Allow restricted settings\"",
+  "onbStep4": "Come back and press \"Check again\"",
+  "onbOpenSettings": "Open Settings",
+  "onbCheckAgain": "Check again",
+
+  "onbBatteryTitle": "Stay awake in the background",
+  "onbBatteryOkTitle": "Battery optimization off",
+  "onbBatteryBody": "To save battery, Android can pause apps in the background — that would delay payment capture while your screen is off. Exempting Taxi Pay keeps the listener alive during a shift.",
+  "onbAllowBackground": "Allow in background",
+  "onbAllSet": "You're all set",
+  "onbSkip": "Skip for now",
+  "onbFinish": "Finish"
+}

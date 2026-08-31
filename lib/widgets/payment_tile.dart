@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/payment.dart';
 import '../util/dates.dart';
 import '../util/money.dart';
@@ -28,7 +29,9 @@ class PaymentTile extends StatelessWidget {
                   color: scheme.onPrimaryContainer),
             ),
       title: Text(
-        isCash ? 'Cash fare' : (payment.payerName ?? 'teleBirr payment'),
+        isCash
+            ? context.l10n.cashFare
+            : (payment.payerName ?? context.l10n.telebirrPayment),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(fontWeight: FontWeight.w600),

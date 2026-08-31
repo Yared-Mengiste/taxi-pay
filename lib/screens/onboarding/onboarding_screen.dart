@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
 import '../../services/permissions_service.dart';
 import '../../services/settings_service.dart';
 import '../home_screen.dart';
@@ -160,12 +161,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           if (canSkip)
             TextButton(
               onPressed: _finish,
-              child: const Text('Skip for now'),
+              child: Text(context.l10n.onbSkip),
             ),
           const Spacer(),
           FilledButton(
             onPressed: _step == 2 ? _finish : null,
-            child: const Text('Finish'),
+            child: Text(context.l10n.onbFinish),
           ),
         ],
       ),
@@ -225,19 +226,18 @@ class _WelcomeStep extends StatelessWidget {
   Widget build(BuildContext context) {
     return _StepScaffold(
       icon: Icons.local_taxi_rounded,
-      title: 'Welcome to Taxi Pay',
+      title: context.l10n.onbWelcomeTitle,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Track the teleBirr payments passengers send you during a shift, '
-            'plus your cash fares — with daily, weekly and monthly totals.',
+            context.l10n.onbWelcomeBody,
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: 24),
           FilledButton(
             onPressed: onGetStarted,
-            child: const Text('Get started'),
+            child: Text(context.l10n.onbGetStarted),
           ),
         ],
       ),
@@ -267,13 +267,14 @@ class _SmsStep extends StatelessWidget {
     final grantedNow = granted == true;
     return _StepScaffold(
       icon: grantedNow ? Icons.check_circle : Icons.sms_rounded,
-      title: grantedNow ? 'SMS access granted' : 'Allow SMS access',
+      title: grantedNow
+          ? context.l10n.onbSmsGrantedTitle
+          : context.l10n.onbSmsTitle,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Taxi Pay reads the payment confirmations teleBirr sends from '
-            'short code 127. No other messages are ever read or stored.',
+            context.l10n.onbSmsBody,
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: 24),
@@ -281,7 +282,7 @@ class _SmsStep extends StatelessWidget {
             FilledButton.icon(
               onPressed: onRequest,
               icon: const Icon(Icons.key_rounded),
-              label: const Text('Allow SMS access'),
+              label: Text(context.l10n.onbSmsTitle),
             ),
             if (requestedAndDenied) ...[
               const SizedBox(height: 24),
@@ -294,7 +295,7 @@ class _SmsStep extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: onNext,
               icon: const Icon(Icons.arrow_forward),
-              label: const Text('Continue'),
+              label: Text(context.l10n.onbContinue),
             ),
           ],
         ],
@@ -331,7 +332,7 @@ class _RestrictedSettingsCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Android blocked the request',
+                    context.l10n.onbRestrictedTitle,
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
@@ -342,16 +343,14 @@ class _RestrictedSettingsCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'For apps installed outside the Play Store, Android hides the '
-              'permission dialog until you allow it once. Do this:',
+              context.l10n.onbRestrictedBody,
               style: TextStyle(color: scheme.onErrorContainer),
             ),
             const SizedBox(height: 12),
-            _step(context, '1',
-                'Open Settings below (or long-press the Taxi Pay icon → App info)'),
-            _step(context, '2', 'Tap the ⋮ menu at the top right'),
-            _step(context, '3', 'Tap "Allow restricted settings"'),
-            _step(context, '4', 'Come back and press "Check again"'),
+            _step(context, '1', context.l10n.onbStep1),
+            _step(context, '2', context.l10n.onbStep2),
+            _step(context, '3', context.l10n.onbStep3),
+            _step(context, '4', context.l10n.onbStep4),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
@@ -359,11 +358,11 @@ class _RestrictedSettingsCard extends StatelessWidget {
                 FilledButton.tonalIcon(
                   onPressed: onOpenSettings,
                   icon: const Icon(Icons.settings_rounded),
-                  label: const Text('Open Settings'),
+                  label: Text(context.l10n.onbOpenSettings),
                 ),
                 OutlinedButton(
                   onPressed: onRecheck,
-                  child: const Text('Check again'),
+                  child: Text(context.l10n.onbCheckAgain),
                 ),
               ],
             ),
@@ -426,15 +425,13 @@ class _BatteryStep extends StatelessWidget {
           ? Icons.battery_charging_full_rounded
           : Icons.battery_saver_rounded,
       title: exemptNow
-          ? 'Battery optimization off'
-          : 'Stay awake in the background',
+          ? context.l10n.onbBatteryOkTitle
+          : context.l10n.onbBatteryTitle,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'To save battery, Android can pause apps in the background — '
-            'that would delay payment capture while your screen is off. '
-            'Exempting Taxi Pay keeps the listener alive during a shift.',
+            context.l10n.onbBatteryBody,
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: 24),
@@ -442,18 +439,18 @@ class _BatteryStep extends StatelessWidget {
             FilledButton.icon(
               onPressed: onRequest,
               icon: const Icon(Icons.bolt_rounded),
-              label: const Text('Allow in background'),
+              label: Text(context.l10n.onbAllowBackground),
             ),
             const SizedBox(height: 8),
             OutlinedButton(
               onPressed: onRecheck,
-              child: const Text('Check again'),
+              child: Text(context.l10n.onbCheckAgain),
             ),
           ] else ...[
             OutlinedButton.icon(
               onPressed: onDone,
               icon: const Icon(Icons.check_rounded),
-              label: const Text("You're all set"),
+              label: Text(context.l10n.onbAllSet),
             ),
           ],
         ],

@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/l10n.dart';
 import '../providers/session_provider.dart';
 
 /// Bottom sheet for logging a cash fare into the running session.
 ///
 /// Returns the entered amount in cents (or null if dismissed).
 Future<int?> showCashEntrySheet(BuildContext context) {
+  final l10n = context.l10n;
   final controller = TextEditingController();
   return showModalBottomSheet<int>(
     context: context,
@@ -23,11 +25,11 @@ Future<int?> showCashEntrySheet(BuildContext context) {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Add a cash fare',
+          Text(l10n.cashSheetTitle,
               style: Theme.of(sheetContext).textTheme.titleLarge),
           const SizedBox(height: 4),
           Text(
-            'Cash fares join the same session total as teleBirr payments.',
+            l10n.cashSheetBody,
             style: Theme.of(sheetContext).textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
@@ -45,10 +47,10 @@ Future<int?> showCashEntrySheet(BuildContext context) {
               Navigator.of(sheetContext)
                   .pop(birr == null ? null : (birr * 100).round());
             },
-            decoration: const InputDecoration(
-              labelText: 'Amount in birr',
-              hintText: 'e.g. 150',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: l10n.cashAmountLabel,
+              hintText: l10n.cashAmountHint,
+              border: const OutlineInputBorder(),
               prefixText: 'ETB ',
             ),
           ),
@@ -59,7 +61,7 @@ Future<int?> showCashEntrySheet(BuildContext context) {
               Navigator.of(sheetContext)
                   .pop(birr == null ? null : (birr * 100).round());
             },
-            child: const Text('Add'),
+            child: Text(l10n.cashAdd),
           ),
         ],
       ),

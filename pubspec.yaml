@@ -31,4 +31,5 @@ dev_dependencies:
   sqflite_common_ffi: ^2.4.0
 
 flutter:
+  generate: true
   uses-material-design: true

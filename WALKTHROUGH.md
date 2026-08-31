@@ -674,3 +674,56 @@ Two details that cost people real afternoons:
 The dashboard's export button exports **exactly the window on screen**
 (`DashboardProvider.windowFrom/windowTo`), so "what I see is what I
 send" — the summary card, chart and CSV can never disagree.
+
+## 11. Amharic localization
+
+**Flutter concepts: gen-l10n and ARB files, locale resolution, ICU
+plurals, rebuilding MaterialApp on settings change.**
+
+The toolchain: two ARB files (`lib/l10n/app_en.arb` template,
+`lib/l10n/app_am.arb`) plus `l10n.yaml`, `generate: true` in pubspec.
+`flutter gen-l10n` writes real Dart classes into `lib/l10n/` (synthetic
+packages are gone in current Flutter), and every screen reads them via a
+one-line extension:
+
+```dart
+extension L10nX on BuildContext {
+  AppLocalizations get l10n => AppLocalizations.of(this); // non-null
+}
+```
+
+### Amharic is the *primary* language
+
+Requirement, not preference: unsupported device locales must fall back
+to Amharic, not English. `MaterialApp` falls back to the *first* entry
+of `supportedLocales`, so the order does the work:
+
+```dart
+supportedLocales: const [Locale('am'), Locale('en')], // am wins fallbacks
+locale: _languageCode == null ? null : Locale(_languageCode!),
+```
+
+A user choice (language sheet on the home app bar) writes through
+`SettingsService.setLanguageCode` and flips `_languageCode` in
+`TaxiPayApp` state — the whole tree relocalizes without a restart,
+because `MaterialApp.locale` participates in the normal rebuild.
+
+### Plurals, ICU style
+
+English needs "1 payment / 2 payments"; Amharic has no plural
+inflection. gen-l10n handles this with ICU plural messages — the
+English ARB declares categories, the Amharic one declares only
+`other`, which CLDR-style fallback covers for am:
+
+```json
+"paymentsCount": "{count, plural, =1{{count} payment} other{{count} payments}}"
+"paymentsCount": "{count, plural, other{{count} ክፍያ}}"
+```
+
+### Known v1 limitation (on purpose)
+
+Date labels on the payment feed and chart axes (`Mon`, `Aug 31`) stay
+Gregorian/English. Localizing them means threading `intl`'s
+`initializeDateFormatting('am')` through the static `DateFormat`s in
+`lib/util/dates.dart` — real work, deferred; numbers and clock times
+(`14:35`) are locale-neutral already.

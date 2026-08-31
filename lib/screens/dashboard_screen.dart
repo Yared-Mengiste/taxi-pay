@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/l10n.dart';
 import '../models/payment.dart';
 import '../providers/dashboard_provider.dart';
 import '../services/csv_export_service.dart';
@@ -19,11 +20,11 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: Text(context.l10n.dashboardTitle),
         centerTitle: false,
         actions: [
           IconButton(
-            tooltip: 'Export CSV',
+            tooltip: context.l10n.exportTooltip,
             onPressed: () => _export(context),
             icon: const Icon(Icons.ios_share_rounded),
           ),
@@ -63,14 +64,17 @@ class DashboardScreen extends StatelessWidget {
   Future<void> _export(BuildContext context) async {
     final dashboard = context.read<DashboardProvider>();
     final messenger = ScaffoldMessenger.of(context);
+    // Strings captured before the await — no context use across the gap.
+    final emptyMessage = context.l10n.exportEmpty;
+    final doneMessage = context.l10n.exportDone;
     final result = await exporter.exportRange(
       from: dashboard.windowFrom,
       to: dashboard.windowTo,
     );
     messenger.showSnackBar(SnackBar(
       content: Text(result.isEmpty
-          ? 'No payments in this period to export.'
-          : 'Exported ${result.paymentCount} payments as CSV.'),
+          ? emptyMessage
+          : doneMessage(result.paymentCount!)),
     ));
   }
 }
@@ -83,22 +87,23 @@ class _PeriodSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return SegmentedButton<DashboardPeriod>(
-      segments: const [
+      segments: [
         ButtonSegment(
           value: DashboardPeriod.day,
-          label: Text('Daily'),
-          icon: Icon(Icons.today_rounded),
+          label: Text(l10n.periodDaily),
+          icon: const Icon(Icons.today_rounded),
         ),
         ButtonSegment(
           value: DashboardPeriod.week,
-          label: Text('Weekly'),
-          icon: Icon(Icons.date_range_rounded),
+          label: Text(l10n.periodWeekly),
+          icon: const Icon(Icons.date_range_rounded),
         ),
         ButtonSegment(
           value: DashboardPeriod.month,
-          label: Text('Monthly'),
-          icon: Icon(Icons.calendar_month_rounded),
+          label: Text(l10n.periodMonthly),
+          icon: const Icon(Icons.calendar_month_rounded),
         ),
       ],
       selected: {period},
@@ -114,13 +119,14 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     final telebirr = dashboard.byMethod[PaymentMethod.telebirr];
     final cash = dashboard.byMethod[PaymentMethod.cash];
     final periodLabel = switch (dashboard.period) {
-      DashboardPeriod.day => 'day',
-      DashboardPeriod.week => 'week',
-      DashboardPeriod.month => 'month',
+      DashboardPeriod.day => l10n.perDay,
+      DashboardPeriod.week => l10n.perWeek,
+      DashboardPeriod.month => l10n.perMonth,
     };
     return Card(
       color: scheme.primaryContainer,
@@ -131,9 +137,9 @@ class _SummaryCard extends StatelessWidget {
           children: [
             Text(
               switch (dashboard.period) {
-                DashboardPeriod.day => 'Last 7 days',
-                DashboardPeriod.week => 'Last 8 weeks',
-                DashboardPeriod.month => 'Last 12 months',
+                DashboardPeriod.day => l10n.window7Days,
+                DashboardPeriod.week => l10n.window8Weeks,
+                DashboardPeriod.month => l10n.window12Months,
               },
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     color: scheme.onPrimaryContainer,
@@ -150,8 +156,8 @@ class _SummaryCard extends StatelessWidget {
                   ),
             ),
             Text(
-              '${dashboard.paymentCount} payments · '
-              '${formatBirr(dashboard.averagePerBucketCents)} avg / $periodLabel',
+              '${l10n.paymentsCount(dashboard.paymentCount)} · '
+              '${l10n.avgPerPeriod(formatBirr(dashboard.averagePerBucketCents), periodLabel)}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: scheme.onPrimaryContainer,
                   ),
@@ -172,7 +178,7 @@ class _SummaryCard extends StatelessWidget {
                 Expanded(
                   child: _MethodChip(
                     icon: Icons.payments_rounded,
-                    label: 'Cash',
+                    label: l10n.actionCash,
                     amountCents: cash?.totalCents ?? 0,
                     count: cash?.paymentCount ?? 0,
                     color: scheme.onPrimaryContainer,
@@ -400,6 +406,7 @@ class _EmptyDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     return Card(
       child: Padding(
@@ -409,13 +416,12 @@ class _EmptyDashboard extends StatelessWidget {
             Icon(Icons.bar_chart_rounded, size: 56, color: scheme.outline),
             const SizedBox(height: 16),
             Text(
-              'No revenue in this period yet',
+              l10n.dashboardEmptyTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              'Start a session and take payments — daily, weekly and\n'
-              'monthly totals will show up here as bar charts.',
+              l10n.dashboardEmptyBody,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: scheme.onSurfaceVariant,

@@ -1,0 +1,229 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for Amharic (`am`).
+class AppLocalizationsAm extends AppLocalizations {
+  AppLocalizationsAm([String locale = 'am']) : super(locale);
+
+  @override
+  String get navSession => 'የስራ ጊዜ';
+
+  @override
+  String get navDashboard => 'ሪፖርት';
+
+  @override
+  String get homeStart => 'ጀምር';
+
+  @override
+  String get homeIdleHint => 'ለስራ ዝግጁ? የተሌቢር ክፍያዎችን ለመከታተል ክፍለ ጊዜ ይጀምሩ።';
+
+  @override
+  String get shiftFinished => 'ስራው አለቀ';
+
+  @override
+  String paymentsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ክፍያ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String liveSince(Object time) {
+    return 'በሂደት ላይ · ከ$time ጀምሮ';
+  }
+
+  @override
+  String paymentsThisSession(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'በዚህ ክፍለ ጊዜ $count ክፍያ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get actionCash => 'ጥሬ ገንዘብ';
+
+  @override
+  String get actionStop => 'አቁም';
+
+  @override
+  String get cashFare => 'የጥሬ ገንዘብ ክፍያ';
+
+  @override
+  String get telebirrPayment => 'የተሌቢር ክፍያ';
+
+  @override
+  String get cashSheetTitle => 'የጥሬ ገንዘብ ክፍያ ያስገቡ';
+
+  @override
+  String get cashSheetBody => 'የጥሬ ገንዘብ ክፍያዎች ከተሌቢር ክፍያዎች ጋር በተመሳሳይ ድምር ይታሰባሉ።';
+
+  @override
+  String get cashAmountLabel => 'መጠን በብር';
+
+  @override
+  String get cashAmountHint => 'ለምሳሌ 150';
+
+  @override
+  String get cashAdd => 'ጨምር';
+
+  @override
+  String get feedWaitingTitle => 'የተሌቢር ክፍያዎችን በመጠበቅ ላይ…';
+
+  @override
+  String get feedWaitingBody =>
+      'ወደ ስልክዎ የተላኩ ክፍያዎች ወዲያውኑ እዚህ ይታያሉ።\nበጥሬ ገንዘብ የሚከፈል ከሆነ? ከታች ያስገቡ።';
+
+  @override
+  String get feedAddCash => 'የጥሬ ገንዘብ ክፍያ ያስገቡ';
+
+  @override
+  String get languageTitle => 'ቋንቋ';
+
+  @override
+  String get languageSystem => 'የስርዓቱ ነባሪ';
+
+  @override
+  String get languageAmharic => 'አማርኛ';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get dashboardTitle => 'ሪፖርት';
+
+  @override
+  String get periodDaily => 'ዕለታዊ';
+
+  @override
+  String get periodWeekly => 'ሳምንታዊ';
+
+  @override
+  String get periodMonthly => 'ወርሃዊ';
+
+  @override
+  String get window7Days => 'ያለፉት 7 ቀናት';
+
+  @override
+  String get window8Weeks => 'ያለፉት 8 ሳምንታት';
+
+  @override
+  String get window12Months => 'ያለፉት 12 ወራት';
+
+  @override
+  String get perDay => 'ቀን';
+
+  @override
+  String get perWeek => 'ሳምንት';
+
+  @override
+  String get perMonth => 'ወር';
+
+  @override
+  String avgPerPeriod(Object amount, Object period) {
+    return 'በአማካይ $amount / $period';
+  }
+
+  @override
+  String get dashboardEmptyTitle => 'በዚህ ጊዜ ገቢ አልተመዘገበም';
+
+  @override
+  String get dashboardEmptyBody =>
+      'ክፍለ ጊዜ ይጀምሩና ክፍያዎችን ይቀበሉ — ዕለታዊ፣ ሳምንታዊ እና\nወርሃዊ ድምሮች እዚህ በግራፍ ይታያሉ።';
+
+  @override
+  String get exportTooltip => 'CSV ላክ';
+
+  @override
+  String get exportEmpty => 'በዚህ ጊዜ ለማንሳት ክፍያ የለም።';
+
+  @override
+  String exportDone(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ክፍያዎችን በCSV ላከ።',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get onbWelcomeTitle => 'እንኳን ወደ ታክሲ ፔይ በደህና መጡ';
+
+  @override
+  String get onbWelcomeBody =>
+      'በስራ ጊዜ የተላኩትን የተሌቢር ክፍያዎች እና የጥሬ ገንዘብ ክፍያዎችዎን በአንድነት ይከታተሉ — በዕለት፣ በሳምንት እና በወር ድምሮች።';
+
+  @override
+  String get onbGetStarted => 'ጀምር';
+
+  @override
+  String get onbSmsTitle => 'የኤስኤምኤስ ፈቃድ ይፍቁ';
+
+  @override
+  String get onbSmsGrantedTitle => 'የኤስኤምኤስ ፈቃድ ተሰጠ';
+
+  @override
+  String get onbSmsBody =>
+      'ታክሲ ፔይ ከ127 ቁጥር የሚላኩትን የተሌቢር የክፍያ ማረገጫዎች ብቻ ያነባል። ሌላ መልእክት በጭራሽ አይነበብም አይቀመጥም።';
+
+  @override
+  String get onbContinue => 'ቀጥል';
+
+  @override
+  String get onbRestrictedTitle => 'አንድሮይድ ጥያቄውን ከለከለ';
+
+  @override
+  String get onbRestrictedBody =>
+      'ከፕሌይ ስቶር ውጭ ከተተከሉ መተግበሪያዎች ፈቃዱ እርስዎ እስክወስኑት ድረስ ተደብቋል። ይህን ያድርጉ:';
+
+  @override
+  String get onbStep1 =>
+      'ከታች ቅንብሮችን ይክፈቱ (ወይም የታክሲ ፔይ ምልክትን በረጅም ተጭነው → የመተግበሪያ መረጃ)';
+
+  @override
+  String get onbStep2 => 'በላይ በቀኝ ባለው ⋮ ምናሌ ይንኩ';
+
+  @override
+  String get onbStep3 => '\"የተገደቡ ቅንብሮችን ፍቁ\" የሚለውን ይንኩ';
+
+  @override
+  String get onbStep4 => 'ወደነበሩበት ተመልሰው \"እንደገና ይፈትሹ\" የሚለውን ይንኩ';
+
+  @override
+  String get onbOpenSettings => 'ቅንብሮችን ክፈት';
+
+  @override
+  String get onbCheckAgain => 'እንደገና ይፈትሹ';
+
+  @override
+  String get onbBatteryTitle => 'በጀርባ ላይ ንቁ ይሁኑ';
+
+  @override
+  String get onbBatteryOkTitle => 'የባትሪ ቆጣቢ ጠፍቷል';
+
+  @override
+  String get onbBatteryBody =>
+      'ባትሪ ለመቆጠብ አንድሮይድ በጀርባ ያሉ መተግበሪያዎችን ሊያገዳ ይችላል — ስክሪኑ ሲጠፋ ክፍያዎች እንዳይመዘገቡ ሊያዘጋጅ ይችላል። ታክሲ ፔይን መፍቀድ በስራ ጊዜ አዳማጹን ንቃት ላይ ይይዛል።';
+
+  @override
+  String get onbAllowBackground => 'በጀርባ ላይ ፍቀድ';
+
+  @override
+  String get onbAllSet => 'ሁሉም ዝግጁ ነው';
+
+  @override
+  String get onbSkip => 'አሁን ይተዉ';
+
+  @override
+  String get onbFinish => 'ጨርስ';
+}
