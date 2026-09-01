@@ -16,6 +16,9 @@ class AppLocalizationsAm extends AppLocalizations {
   String get navDashboard => 'ሪፖርት';
 
   @override
+  String get navSettings => 'ቅንብሮች';
+
+  @override
   String get homeStart => 'ጀምር';
 
   @override
@@ -65,6 +68,75 @@ class AppLocalizationsAm extends AppLocalizations {
   String walletBalance(Object amount) {
     return 'ቀሪ ሂሳብ፦ $amount';
   }
+
+  @override
+  String get syncTooltip => 'ያመለጡ ኤስኤምኤስ አሳምር';
+
+  @override
+  String syncRecovered(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ያልተመዘገቡ ክፍያዎች ተጨምረዋል።',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncUpToDate => 'ሁሉም ክፍያዎች አሁንም ተመዝግበዋል።';
+
+  @override
+  String get syncFailed => 'የኤስኤምኤስ ገቢ ሳጥንን ማንበብ አልተቻለም — የኤስኤምኤስ ፈቃዱን ይፈትሹ።';
+
+  @override
+  String get stopConfirmTitle => 'ይህ ክፍለ ጊዜ ይቁም?';
+
+  @override
+  String get stopConfirmBody =>
+      'የስራው ማጠቃለያ በመነሻ ገጹ ላይ ይቆያል፤ ክፍለ ጊዜውም ወደ ሪፖርቱ ያሉት ክፍለ ጊዜዎች ይሰጋል።';
+
+  @override
+  String get stopConfirmAction => 'አቁም';
+
+  @override
+  String get stopConfirmCancel => 'ቀጥል';
+
+  @override
+  String get simulateTooltip => 'የሙከራ ክፍያ ላክ';
+
+  @override
+  String get simulateSheetTitle => 'የሙከራ ክፍያ ላክ';
+
+  @override
+  String get simulateSheetBody =>
+      'እውነተኛ የተሌቢር መልእክት መስሎ በትክክለኛው የመቀበያ ሂደት ይራራል። ገንዘብ አይንቀሳቀስም — መተግበሪያውን ለመፈተሽ ብቻ ነው።';
+
+  @override
+  String get simulatePayerLabel => 'የከፋይ ስም';
+
+  @override
+  String get simulatePayerHint => 'ለምሳሌ አበበ በላች';
+
+  @override
+  String get simulatePhoneLabel => 'የከፋይ ስልክ';
+
+  @override
+  String get simulatePhoneHint => 'ለምሳሌ 0911***234';
+
+  @override
+  String get simulateSend => 'የሙከራ መልእክት ላክ';
+
+  @override
+  String get simulateDone => 'የሙከራ ክፍያ ተመዝግቧል።';
+
+  @override
+  String get simulateDropped => 'ነገር አልተመዘገበም — ክፍለ ጊዜ ተጀምሯል?';
+
+  @override
+  String get sessionsTitle => 'ያለፉ ክፍለ ጊዜዎች';
+
+  @override
+  String get sessionNoPayments => 'በዚህ ክፍለ ጊዜ ክፍያ አልተመዘገበም።';
 
   @override
   String get actionFuel => 'ነዳጅ';
@@ -162,6 +234,9 @@ class AppLocalizationsAm extends AppLocalizations {
   String get settingsTitle => 'ቅንብሮች';
 
   @override
+  String get themeTitle => 'ገጽታ';
+
+  @override
   String get themeSystem => 'የስርዓቱን ይከተሉ';
 
   @override
@@ -169,6 +244,43 @@ class AppLocalizationsAm extends AppLocalizations {
 
   @override
   String get themeDark => 'ጨለማ';
+
+  @override
+  String get settingsPermissionsTitle => 'ፈቃዶች';
+
+  @override
+  String get settingsDataTitle => 'መረጃ';
+
+  @override
+  String get settingsPermissionSms => 'የኤስኤምኤስ ፈቃድ (ተሌቢር 127)';
+
+  @override
+  String get settingsPermissionSmsDenied => 'ክፍያዎችን ለመቅረጽ ያስፈልጋል';
+
+  @override
+  String get settingsPermissionBattery => 'ከባትሪ ቆጣቢ የተነጠቀ';
+
+  @override
+  String get settingsPermissionBatteryDenied => 'በጀርባ ላይ ለመቅረጽ ያስፈልጋል';
+
+  @override
+  String get settingsGranted => 'ተፈቅዷል';
+
+  @override
+  String get settingsDenied => 'አልተፈቀደም';
+
+  @override
+  String get settingsOpenAppSettings => 'የመተግበሪያ ቅንብሮችን ክፈት';
+
+  @override
+  String get settingsPrivacyTitle => 'ግላዊ በንድፈ ሃሳብ';
+
+  @override
+  String get settingsPrivacyBody =>
+      'ሁሉም መረጃ በዚህ ስልክ ላይ ይቀመጣል። ከ127 የሚላኩ የተሌቢር ማረገጫዎች ብቻ ይነበባሉ — መለያ የለም፣ መላክ የለም።';
+
+  @override
+  String get settingsVersion => 'ታክሲ ፔይ ስሪት 1.0.0';
 
   @override
   String get backupAction => 'መጠባበቂያ ላክ';

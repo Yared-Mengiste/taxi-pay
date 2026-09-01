@@ -10,6 +10,7 @@ import '../models/expense.dart';
 import '../models/payment.dart';
 import '../models/session.dart';
 import '../services/background_task_service.dart';
+import '../services/reconciliation_service.dart';
 
 /// UI-facing state for the session feature: the one object the home screen
 /// watches.
@@ -20,6 +21,7 @@ import '../services/background_task_service.dart';
 ///    is a cache + notifier);
 ///  - react to captured payments arriving via [capturedPayments] and to app
 ///    resume (picks up writes made by the background isolate);
+///  - run reconciliation on demand (manual sync button) and on resume;
 ///  - keep a summary of the just-ended session around for the stop screen;
 ///  - schedule/unschedule periodic reconciliation with the session's life.
 class SessionProvider extends ChangeNotifier with WidgetsBindingObserver {
@@ -27,17 +29,30 @@ class SessionProvider extends ChangeNotifier with WidgetsBindingObserver {
     required AppDatabase app,
     required Stream<Payment> capturedPayments,
     this.backgroundTasks,
-  })  : _sessionsRepo = SessionRepository(app),
+    this.reconciliation,
+    this.onReconciledPayment,
+  })  : _app = app,
+        _sessionsRepo = SessionRepository(app),
         _paymentsRepo = PaymentRepository(app),
         _expensesRepo = ExpenseRepository(app) {
     _subscription = capturedPayments.listen((_) => _reloadActive());
     WidgetsBinding.instance.addObserver(this);
   }
 
+  final AppDatabase _app;
   final SessionRepository _sessionsRepo;
   final PaymentRepository _paymentsRepo;
   final ExpenseRepository _expensesRepo;
   final BackgroundTaskService? backgroundTasks;
+
+  /// Inbox-diff engine; defaults to one over [_app]. Injected in tests.
+  final ReconciliationService? reconciliation;
+
+  /// Fires for every payment reconciliation inserts (manual sync or
+  /// resume) — wired in `app.dart` to re-emit on the capture stream so
+  /// listeners (beep, live reload) behave as if the SMS had arrived live.
+  final void Function(Payment payment)? onReconciledPayment;
+
   late final StreamSubscription<Payment> _subscription;
 
   Session? _activeSession;
@@ -50,6 +65,7 @@ class SessionProvider extends ChangeNotifier with WidgetsBindingObserver {
   List<Expense> _lastEndedExpenses = const [];
 
   bool _disposed = false;
+  bool _reconciling = false;
 
   /// The running session, or null.
   Session? get activeSession => _activeSession;
@@ -73,6 +89,19 @@ class SessionProvider extends ChangeNotifier with WidgetsBindingObserver {
       _payments.fold(0, (sum, p) => sum + p.amountCents);
 
   int get paymentCount => _payments.length;
+
+  /// How the running total splits by arrival method — the live card's
+  /// teleBirr/cash chips.
+  int get telebirrTotalCents => _payments
+      .where((p) => p.method == PaymentMethod.telebirr)
+      .fold(0, (sum, p) => sum + p.amountCents);
+
+  int get cashTotalCents => _payments
+      .where((p) => p.method == PaymentMethod.cash)
+      .fold(0, (sum, p) => sum + p.amountCents);
+
+  /// True while an inbox diff is running — the sync button's spinner.
+  bool get isReconciling => _reconciling;
 
   /// What the session cost to run (fuel etc.).
   int get expenseTotalCents =>
@@ -176,6 +205,37 @@ class SessionProvider extends ChangeNotifier with WidgetsBindingObserver {
     await _reloadActive();
   }
 
+  /// Runs one inbox reconciliation pass and returns how many payments it
+  /// inserted. Re-throws inbox-read failures so the manual sync button can
+  /// surface "check the SMS permission"; the resume path calls
+  /// [_reconcileQuietly], which swallows them instead.
+  Future<int> reconcile() async {
+    if (_reconciling || _activeSession == null) return 0;
+    _reconciling = true;
+    _notify();
+    try {
+      final service = reconciliation ?? ReconciliationService(_app);
+      final inserted = await service.reconcile();
+      for (final payment in inserted) {
+        onReconciledPayment?.call(payment);
+      }
+      await _reloadActive();
+      return inserted.length;
+    } finally {
+      _reconciling = false;
+      _notify();
+    }
+  }
+
+  Future<void> _reconcileQuietly() async {
+    try {
+      await reconcile();
+    } catch (_) {
+      // Inbox reads throw without READ_SMS. Nothing to act on mid-shift;
+      // the settings screen shows the permission state.
+    }
+  }
+
   Future<void> _reloadActive() async {
     _activeSession = await _sessionsRepo.activeSession();
     if (_activeSession == null) {
@@ -200,10 +260,16 @@ class SessionProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   /// Payments captured by the background isolate while we were backgrounded
-  /// don't arrive on any stream — reload from the DB on every resume.
+  /// don't arrive on any stream — reload from the DB on every resume, and
+  /// diff the inbox while we're at it (the correctness guarantee used to
+  /// live in `app.dart`; the provider owns it now that the sync button
+  /// shares the same code path).
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _reloadActive();
+    if (state == AppLifecycleState.resumed) {
+      _reloadActive();
+      _reconcileQuietly();
+    }
   }
 
   @override

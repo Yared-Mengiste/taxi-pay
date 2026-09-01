@@ -52,13 +52,23 @@ class SessionRepository {
   }
 
   /// Most recent finished sessions with their earnings, newest first.
+  ///
+  /// Payments and expenses are aggregated in subqueries (one row per
+  /// session each) so the join can't fan out and double-count.
   Future<List<SessionSummary>> recentSessions({int limit = 30}) async {
     final rows = await _db.rawQuery(
       'SELECT s.id, s.started_at_ms, s.ended_at_ms, '
-      'COALESCE(SUM(p.amount_cents), 0) AS total, COUNT(p.id) AS n '
-      'FROM sessions s LEFT JOIN payments p ON p.session_id = s.id '
+      'COALESCE(p.total, 0) AS total, COALESCE(p.n, 0) AS n, '
+      'COALESCE(e.total, 0) AS etotal '
+      'FROM sessions s '
+      'LEFT JOIN (SELECT session_id, SUM(amount_cents) AS total, '
+      'COUNT(*) AS n FROM payments GROUP BY session_id) p '
+      'ON p.session_id = s.id '
+      'LEFT JOIN (SELECT session_id, SUM(amount_cents) AS total '
+      'FROM expenses GROUP BY session_id) e '
+      'ON e.session_id = s.id '
       'WHERE s.ended_at_ms IS NOT NULL '
-      'GROUP BY s.id ORDER BY s.started_at_ms DESC LIMIT ?',
+      'ORDER BY s.started_at_ms DESC LIMIT ?',
       [limit],
     );
     return rows
@@ -71,6 +81,7 @@ class SessionRepository {
             ),
             totalCents: r['total'] as int,
             paymentCount: r['n'] as int,
+            expenseTotalCents: r['etotal'] as int,
           ),
         )
         .toList();
@@ -82,9 +93,17 @@ class SessionSummary {
     required this.session,
     required this.totalCents,
     required this.paymentCount,
+    this.expenseTotalCents = 0,
   });
 
   final Session session;
   final int totalCents;
   final int paymentCount;
+
+  /// What the session cost to run (fuel etc.) — the other half of the
+  /// story [totalCents] tells.
+  final int expenseTotalCents;
+
+  /// Gross minus expenses: what the session actually earned.
+  int get netCents => totalCents - expenseTotalCents;
 }

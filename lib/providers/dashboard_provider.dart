@@ -2,20 +2,10 @@ import 'package:flutter/foundation.dart';
 
 import '../data/db/expense_repository.dart';
 import '../data/db/payment_repository.dart';
+import '../data/db/session_repository.dart';
+import '../models/expense.dart';
 import '../models/payment.dart';
 import '../util/dates.dart';
-
-/// What one bar on the dashboard chart represents.
-enum DashboardPeriod {
-  /// Last 7 days, one bar per day.
-  day,
-
-  /// Last 8 weeks (Mon-anchored), one bar per week.
-  week,
-
-  /// Last 12 months, one bar per month.
-  month;
-}
 
 /// One chart bar: the bucket's start day, its revenue and payment count.
 /// Zero-filled buckets are included — an empty day is still a day.
@@ -34,6 +24,26 @@ class RevenueBucket {
   bool get isEmpty => paymentCount == 0;
 }
 
+/// The full contents of one past session, for the drill-down sheet.
+class SessionDetail {
+  const SessionDetail({required this.payments, required this.expenses});
+
+  final List<Payment> payments;
+  final List<Expense> expenses;
+}
+
+/// What one bar on the dashboard chart represents.
+enum DashboardPeriod {
+  /// Last 7 days, one bar per day.
+  day,
+
+  /// Last 8 weeks (Mon-anchored), one bar per week.
+  week,
+
+  /// Last 12 months, one bar per month.
+  month;
+}
+
 /// Aggregated revenue for the selected window. The DB does what SQL is good
 /// at (one `GROUP BY day` query); Dart does what Dart is good at (calendar
 /// math and zero-filling the chart buckets).
@@ -41,15 +51,19 @@ class DashboardProvider extends ChangeNotifier {
   DashboardProvider({
     required PaymentRepository payments,
     required ExpenseRepository expenses,
+    required SessionRepository sessions,
   })  : _paymentsRepo = payments,
-        _expensesRepo = expenses;
+        _expensesRepo = expenses,
+        _sessionsRepo = sessions;
 
   final PaymentRepository _paymentsRepo;
   final ExpenseRepository _expensesRepo;
+  final SessionRepository _sessionsRepo;
 
   DashboardPeriod _period = DashboardPeriod.day;
   List<RevenueBucket> _buckets = const [];
   Map<PaymentMethod, BucketTotal> _byMethod = const {};
+  List<SessionSummary> _sessions = const [];
   int _expenseTotalCents = 0;
   bool _loading = false;
 
@@ -59,6 +73,9 @@ class DashboardProvider extends ChangeNotifier {
   List<RevenueBucket> get buckets => List.unmodifiable(_buckets);
 
   Map<PaymentMethod, BucketTotal> get byMethod => _byMethod;
+
+  /// Finished sessions, newest first — the "past sessions" list.
+  List<SessionSummary> get sessions => List.unmodifiable(_sessions);
 
   bool get loading => _loading;
 
@@ -121,6 +138,7 @@ class DashboardProvider extends ChangeNotifier {
       from.millisecondsSinceEpoch,
       to.millisecondsSinceEpoch,
     );
+    final sessions = await _sessionsRepo.recentSessions();
 
     // Fold each local day into its containing bucket.
     final fold = <int, List<int>>{}; // bucketIndex -> [totalCents, count]
@@ -146,8 +164,17 @@ class DashboardProvider extends ChangeNotifier {
     ];
     _byMethod = byMethod;
     _expenseTotalCents = expenseTotal;
+    _sessions = sessions;
     _loading = false;
     notifyListeners();
+  }
+
+  /// Everything recorded in one past session — the drill-down sheet's data.
+  /// Read-on-demand: history sessions are only touched when tapped.
+  Future<SessionDetail> loadSessionDetail(int sessionId) async {
+    final payments = await _paymentsRepo.paymentsForSession(sessionId);
+    final expenses = await _expensesRepo.expensesForSession(sessionId);
+    return SessionDetail(payments: payments, expenses: expenses);
   }
 
   /// The ordered bucket starts for the current period: 7 days, 8 Mondays

@@ -25,7 +25,11 @@ void main() {
     sessions = SessionRepository(app);
     payments = PaymentRepository(app);
     expenses = ExpenseRepository(app);
-    dashboard = DashboardProvider(payments: payments, expenses: expenses);
+    dashboard = DashboardProvider(
+      payments: payments,
+      expenses: expenses,
+      sessions: sessions,
+    );
   });
 
   tearDown(() async {
@@ -188,5 +192,86 @@ void main() {
     expect(dashboard.totalCents, 30000);
     expect(dashboard.expenseTotalCents, 5000);
     expect(dashboard.netCents, 25000);
+  });
+
+  test('past sessions list: newest first, with expenses and net', () async {
+    final now = DateTime.now();
+    final s1 = await sessions.startSession(
+        nowMs: now.subtract(const Duration(days: 2)).millisecondsSinceEpoch);
+    await payments.insertTelebirrPaymentIfMissing(Payment(
+      transactionId: 'TX1',
+      sessionId: s1.id,
+      method: PaymentMethod.telebirr,
+      amountCents: 20000,
+      smsTimestampMs: s1.startedAtMs + 1000,
+      createdAtMs: s1.startedAtMs + 1000,
+    ));
+    await payments.addCashPayment(
+        sessionId: s1.id, amountCents: 5000, timestampMs: s1.startedAtMs + 2000);
+    await expenses.addExpense(
+      sessionId: s1.id,
+      amountCents: 3000,
+      category: ExpenseCategory.fuel,
+      timestampMs: s1.startedAtMs + 3000,
+    );
+    await sessions.stopSession(nowMs: s1.startedAtMs + 4000);
+
+    final s2 = await sessions.startSession(
+        nowMs: now.subtract(const Duration(days: 1)).millisecondsSinceEpoch);
+    await payments.addCashPayment(
+        sessionId: s2.id, amountCents: 7000, timestampMs: s2.startedAtMs + 1000);
+    await sessions.stopSession(nowMs: s2.startedAtMs + 2000);
+
+    // An *active* session exists too — it must not appear in history.
+    await sessions.startSession(nowMs: now.millisecondsSinceEpoch);
+
+    await dashboard.reload();
+
+    expect(dashboard.sessions, hasLength(2));
+    // Newest first: yesterday's 7000 cash-only session.
+    expect(dashboard.sessions.first.session.id, s2.id);
+    expect(dashboard.sessions.first.totalCents, 7000);
+    expect(dashboard.sessions.first.paymentCount, 1);
+    expect(dashboard.sessions.first.expenseTotalCents, 0);
+    expect(dashboard.sessions.first.netCents, 7000);
+    // Two days ago: 25000 gross, 3000 expenses, 22000 net.
+    expect(dashboard.sessions.last.session.id, s1.id);
+    expect(dashboard.sessions.last.totalCents, 25000);
+    expect(dashboard.sessions.last.paymentCount, 2);
+    expect(dashboard.sessions.last.expenseTotalCents, 3000);
+    expect(dashboard.sessions.last.netCents, 22000);
+  });
+
+  test('loadSessionDetail returns the session payments and expenses',
+      () async {
+    final now = DateTime.now();
+    final s = await sessions.startSession(
+        nowMs: now.subtract(const Duration(hours: 3)).millisecondsSinceEpoch);
+    await payments.insertTelebirrPaymentIfMissing(Payment(
+      transactionId: 'TX1',
+      sessionId: s.id,
+      method: PaymentMethod.telebirr,
+      amountCents: 12000,
+      smsTimestampMs: s.startedAtMs + 1000,
+      createdAtMs: s.startedAtMs + 1000,
+    ));
+    await payments.addCashPayment(
+        sessionId: s.id, amountCents: 4000, timestampMs: s.startedAtMs + 2000);
+    await expenses.addExpense(
+      sessionId: s.id,
+      amountCents: 2500,
+      category: ExpenseCategory.fuel,
+      note: 'half tank',
+      timestampMs: s.startedAtMs + 3000,
+    );
+    await sessions.stopSession(nowMs: s.startedAtMs + 4000);
+
+    final detail = await dashboard.loadSessionDetail(s.id);
+
+    expect(detail.payments, hasLength(2)); // newest first
+    expect(detail.payments.first.amountCents, 4000);
+    expect(detail.payments.first.method, PaymentMethod.cash);
+    expect(detail.expenses, hasLength(1));
+    expect(detail.expenses.first.note, 'half tank');
   });
 }

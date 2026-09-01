@@ -54,6 +54,21 @@ Future<int?> showCashEntrySheet(BuildContext context) {
               prefixText: 'ETB ',
             ),
           ),
+          const SizedBox(height: 12),
+          // Common fares, one tap: filling the field would still need a
+          // second tap on Add, so a chip *is* the entry.
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              for (final birr in const [20, 30, 50, 100, 150, 200])
+                ActionChip(
+                  label: Text('$birr'),
+                  onPressed: () =>
+                      Navigator.of(sheetContext).pop(birr * 100),
+                ),
+            ],
+          ),
           const SizedBox(height: 16),
           FilledButton(
             onPressed: () {

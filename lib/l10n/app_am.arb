@@ -3,6 +3,7 @@
 
   "navSession": "የስራ ጊዜ",
   "navDashboard": "ሪፖርት",
+  "navSettings": "ቅንብሮች",
 
   "homeStart": "ጀምር",
   "homeIdleHint": "ለስራ ዝግጁ? የተሌቢር ክፍያዎችን ለመከታተል ክፍለ ጊዜ ይጀምሩ።",
@@ -20,6 +21,30 @@
       "amount": {}
     }
   },
+
+  "syncTooltip": "ያመለጡ ኤስኤምኤስ አሳምር",
+  "syncRecovered": "{count, plural, other{{count} ያልተመዘገቡ ክፍያዎች ተጨምረዋል።}}",
+  "syncUpToDate": "ሁሉም ክፍያዎች አሁንም ተመዝግበዋል።",
+  "syncFailed": "የኤስኤምኤስ ገቢ ሳጥንን ማንበብ አልተቻለም — የኤስኤምኤስ ፈቃዱን ይፈትሹ።",
+
+  "stopConfirmTitle": "ይህ ክፍለ ጊዜ ይቁም?",
+  "stopConfirmBody": "የስራው ማጠቃለያ በመነሻ ገጹ ላይ ይቆያል፤ ክፍለ ጊዜውም ወደ ሪፖርቱ ያሉት ክፍለ ጊዜዎች ይሰጋል።",
+  "stopConfirmAction": "አቁም",
+  "stopConfirmCancel": "ቀጥል",
+
+  "simulateTooltip": "የሙከራ ክፍያ ላክ",
+  "simulateSheetTitle": "የሙከራ ክፍያ ላክ",
+  "simulateSheetBody": "እውነተኛ የተሌቢር መልእክት መስሎ በትክክለኛው የመቀበያ ሂደት ይራራል። ገንዘብ አይንቀሳቀስም — መተግበሪያውን ለመፈተሽ ብቻ ነው።",
+  "simulatePayerLabel": "የከፋይ ስም",
+  "simulatePayerHint": "ለምሳሌ አበበ በላች",
+  "simulatePhoneLabel": "የከፋይ ስልክ",
+  "simulatePhoneHint": "ለምሳሌ 0911***234",
+  "simulateSend": "የሙከራ መልእክት ላክ",
+  "simulateDone": "የሙከራ ክፍያ ተመዝግቧል።",
+  "simulateDropped": "ነገር አልተመዘገበም — ክፍለ ጊዜ ተጀምሯል?",
+
+  "sessionsTitle": "ያለፉ ክፍለ ጊዜዎች",
+  "sessionNoPayments": "በዚህ ክፍለ ጊዜ ክፍያ አልተመዘገበም።",
 
   "actionFuel": "ነዳጅ",
   "expenseFuel": "ነዳጅ",
@@ -66,9 +91,24 @@
   "languageEnglish": "English",
 
   "settingsTitle": "ቅንብሮች",
+  "themeTitle": "ገጽታ",
   "themeSystem": "የስርዓቱን ይከተሉ",
   "themeLight": "ብርሃናማ",
   "themeDark": "ጨለማ",
+
+  "settingsPermissionsTitle": "ፈቃዶች",
+  "settingsDataTitle": "መረጃ",
+  "settingsPermissionSms": "የኤስኤምኤስ ፈቃድ (ተሌቢር 127)",
+  "settingsPermissionSmsDenied": "ክፍያዎችን ለመቅረጽ ያስፈልጋል",
+  "settingsPermissionBattery": "ከባትሪ ቆጣቢ የተነጠቀ",
+  "settingsPermissionBatteryDenied": "በጀርባ ላይ ለመቅረጽ ያስፈልጋል",
+  "settingsGranted": "ተፈቅዷል",
+  "settingsDenied": "አልተፈቀደም",
+  "settingsOpenAppSettings": "የመተግበሪያ ቅንብሮችን ክፈት",
+
+  "settingsPrivacyTitle": "ግላዊ በንድፈ ሃሳብ",
+  "settingsPrivacyBody": "ሁሉም መረጃ በዚህ ስልክ ላይ ይቀመጣል። ከ127 የሚላኩ የተሌቢር ማረገጫዎች ብቻ ይነበባሉ — መለያ የለም፣ መላክ የለም።",
+  "settingsVersion": "ታክሲ ፔይ ስሪት 1.0.0",
 
   "backupAction": "መጠባበቂያ ላክ",
   "backupSubtitle": "ሙሉ መረጃዎን በአንድ ፋይል ያጋሩ",

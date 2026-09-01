@@ -16,6 +16,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navDashboard => 'Dashboard';
 
   @override
+  String get navSettings => 'Settings';
+
+  @override
   String get homeStart => 'START';
 
   @override
@@ -68,6 +71,77 @@ class AppLocalizationsEn extends AppLocalizations {
   String walletBalance(Object amount) {
     return 'Wallet: $amount';
   }
+
+  @override
+  String get syncTooltip => 'Sync missed SMS';
+
+  @override
+  String syncRecovered(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Synced $count missed payments from your inbox.',
+      one: 'Synced $count missed payment from your inbox.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncUpToDate => 'All payments are up to date.';
+
+  @override
+  String get syncFailed =>
+      'Couldn\'t read the SMS inbox — check the SMS permission.';
+
+  @override
+  String get stopConfirmTitle => 'Stop this session?';
+
+  @override
+  String get stopConfirmBody =>
+      'The shift summary stays on the home screen, and the session moves to the dashboard\'s past sessions.';
+
+  @override
+  String get stopConfirmAction => 'Stop session';
+
+  @override
+  String get stopConfirmCancel => 'Keep going';
+
+  @override
+  String get simulateTooltip => 'Send a test payment';
+
+  @override
+  String get simulateSheetTitle => 'Send a test payment';
+
+  @override
+  String get simulateSheetBody =>
+      'Builds a realistic teleBirr SMS and runs it through the real capture pipeline. No money moves — it only tests the app.';
+
+  @override
+  String get simulatePayerLabel => 'Payer name';
+
+  @override
+  String get simulatePayerHint => 'e.g. Abebe Balcha';
+
+  @override
+  String get simulatePhoneLabel => 'Payer phone';
+
+  @override
+  String get simulatePhoneHint => 'e.g. 09** ***234';
+
+  @override
+  String get simulateSend => 'Send test SMS';
+
+  @override
+  String get simulateDone => 'Test payment captured.';
+
+  @override
+  String get simulateDropped => 'Nothing was captured — is a session running?';
+
+  @override
+  String get sessionsTitle => 'Past sessions';
+
+  @override
+  String get sessionNoPayments => 'No payments in this session.';
 
   @override
   String get actionFuel => 'Fuel';
@@ -169,6 +243,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsTitle => 'Settings';
 
   @override
+  String get themeTitle => 'Theme';
+
+  @override
   String get themeSystem => 'Follow system';
 
   @override
@@ -176,6 +253,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get themeDark => 'Dark';
+
+  @override
+  String get settingsPermissionsTitle => 'Permissions';
+
+  @override
+  String get settingsDataTitle => 'Data';
+
+  @override
+  String get settingsPermissionSms => 'SMS access (teleBirr 127)';
+
+  @override
+  String get settingsPermissionSmsDenied => 'Needed to capture payments';
+
+  @override
+  String get settingsPermissionBattery => 'Exempt from battery optimization';
+
+  @override
+  String get settingsPermissionBatteryDenied => 'Needed for background capture';
+
+  @override
+  String get settingsGranted => 'Granted';
+
+  @override
+  String get settingsDenied => 'Not granted';
+
+  @override
+  String get settingsOpenAppSettings => 'Open app settings';
+
+  @override
+  String get settingsPrivacyTitle => 'Private by design';
+
+  @override
+  String get settingsPrivacyBody =>
+      'Everything stays on this phone. Only teleBirr confirmations from 127 are read — no account, no upload.';
+
+  @override
+  String get settingsVersion => 'Taxi Pay v1.0.0';
 
   @override
   String get backupAction => 'Export backup';

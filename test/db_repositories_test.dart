@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:taxi_pay/data/db/app_database.dart';
+import 'package:taxi_pay/data/db/expense_repository.dart';
 import 'package:taxi_pay/data/db/payment_repository.dart';
 import 'package:taxi_pay/data/db/session_repository.dart';
+import 'package:taxi_pay/models/expense.dart';
 import 'package:taxi_pay/models/payment.dart';
 
 void main() {
@@ -46,6 +48,40 @@ void main() {
       expect(done, hasLength(1));
       expect(done.first.session.startedAtMs, 1000);
       expect(done.first.session.endedAtMs, 5000);
+      expect(done.first.expenseTotalCents, 0);
+      expect(done.first.netCents, 0);
+    });
+
+    test('recentSessions aggregates payments and expenses per session',
+        () async {
+      final s1 = await sessions.startSession(nowMs: 1000);
+      await payments.addCashPayment(
+          sessionId: s1.id, amountCents: 5000, timestampMs: 1500);
+      await ExpenseRepository(db).addExpense(
+        sessionId: s1.id,
+        amountCents: 2000,
+        category: ExpenseCategory.fuel,
+        timestampMs: 1600,
+      );
+      await sessions.stopSession(nowMs: 2000);
+
+      final s2 = await sessions.startSession(nowMs: 3000);
+      await payments.addCashPayment(
+          sessionId: s2.id, amountCents: 7000, timestampMs: 3500);
+      await sessions.stopSession(nowMs: 4000);
+
+      final done = await sessions.recentSessions();
+      expect(done, hasLength(2));
+      // Newest first.
+      expect(done.first.session.id, s2.id);
+      expect(done.first.totalCents, 7000);
+      expect(done.first.paymentCount, 1);
+      expect(done.first.expenseTotalCents, 0);
+      expect(done.first.netCents, 7000);
+      expect(done.last.session.id, s1.id);
+      expect(done.last.totalCents, 5000);
+      expect(done.last.expenseTotalCents, 2000);
+      expect(done.last.netCents, 3000);
     });
 
     test('active session state is durable — a new repository sees it too',

@@ -3,6 +3,7 @@
 
   "navSession": "Session",
   "navDashboard": "Dashboard",
+  "navSettings": "Settings",
 
   "homeStart": "START",
   "homeIdleHint": "Ready to work? Start a session to track teleBirr payments.",
@@ -20,6 +21,30 @@
       "amount": {}
     }
   },
+
+  "syncTooltip": "Sync missed SMS",
+  "syncRecovered": "{count, plural, =1{Synced {count} missed payment from your inbox.} other{Synced {count} missed payments from your inbox.}}",
+  "syncUpToDate": "All payments are up to date.",
+  "syncFailed": "Couldn't read the SMS inbox — check the SMS permission.",
+
+  "stopConfirmTitle": "Stop this session?",
+  "stopConfirmBody": "The shift summary stays on the home screen, and the session moves to the dashboard's past sessions.",
+  "stopConfirmAction": "Stop session",
+  "stopConfirmCancel": "Keep going",
+
+  "simulateTooltip": "Send a test payment",
+  "simulateSheetTitle": "Send a test payment",
+  "simulateSheetBody": "Builds a realistic teleBirr SMS and runs it through the real capture pipeline. No money moves — it only tests the app.",
+  "simulatePayerLabel": "Payer name",
+  "simulatePayerHint": "e.g. Abebe Balcha",
+  "simulatePhoneLabel": "Payer phone",
+  "simulatePhoneHint": "e.g. 09** ***234",
+  "simulateSend": "Send test SMS",
+  "simulateDone": "Test payment captured.",
+  "simulateDropped": "Nothing was captured — is a session running?",
+
+  "sessionsTitle": "Past sessions",
+  "sessionNoPayments": "No payments in this session.",
 
   "actionFuel": "Fuel",
   "expenseFuel": "Fuel",
@@ -66,9 +91,24 @@
   "languageEnglish": "English",
 
   "settingsTitle": "Settings",
+  "themeTitle": "Theme",
   "themeSystem": "Follow system",
   "themeLight": "Light",
   "themeDark": "Dark",
+
+  "settingsPermissionsTitle": "Permissions",
+  "settingsDataTitle": "Data",
+  "settingsPermissionSms": "SMS access (teleBirr 127)",
+  "settingsPermissionSmsDenied": "Needed to capture payments",
+  "settingsPermissionBattery": "Exempt from battery optimization",
+  "settingsPermissionBatteryDenied": "Needed for background capture",
+  "settingsGranted": "Granted",
+  "settingsDenied": "Not granted",
+  "settingsOpenAppSettings": "Open app settings",
+
+  "settingsPrivacyTitle": "Private by design",
+  "settingsPrivacyBody": "Everything stays on this phone. Only teleBirr confirmations from 127 are read — no account, no upload.",
+  "settingsVersion": "Taxi Pay v1.0.0",
 
   "backupAction": "Export backup",
   "backupSubtitle": "Share a copy of all your data as one file",

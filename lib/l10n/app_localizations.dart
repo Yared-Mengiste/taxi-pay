@@ -110,6 +110,12 @@ abstract class AppLocalizations {
   /// **'Dashboard'**
   String get navDashboard;
 
+  /// No description provided for @navSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get navSettings;
+
   /// No description provided for @homeStart.
   ///
   /// In en, this message translates to:
@@ -175,6 +181,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Wallet: {amount}'**
   String walletBalance(Object amount);
+
+  /// No description provided for @syncTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync missed SMS'**
+  String get syncTooltip;
+
+  /// No description provided for @syncRecovered.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Synced {count} missed payment from your inbox.} other{Synced {count} missed payments from your inbox.}}'**
+  String syncRecovered(num count);
+
+  /// No description provided for @syncUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'All payments are up to date.'**
+  String get syncUpToDate;
+
+  /// No description provided for @syncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read the SMS inbox — check the SMS permission.'**
+  String get syncFailed;
+
+  /// No description provided for @stopConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop this session?'**
+  String get stopConfirmTitle;
+
+  /// No description provided for @stopConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The shift summary stays on the home screen, and the session moves to the dashboard\'s past sessions.'**
+  String get stopConfirmBody;
+
+  /// No description provided for @stopConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop session'**
+  String get stopConfirmAction;
+
+  /// No description provided for @stopConfirmCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep going'**
+  String get stopConfirmCancel;
+
+  /// No description provided for @simulateTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a test payment'**
+  String get simulateTooltip;
+
+  /// No description provided for @simulateSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a test payment'**
+  String get simulateSheetTitle;
+
+  /// No description provided for @simulateSheetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Builds a realistic teleBirr SMS and runs it through the real capture pipeline. No money moves — it only tests the app.'**
+  String get simulateSheetBody;
+
+  /// No description provided for @simulatePayerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Payer name'**
+  String get simulatePayerLabel;
+
+  /// No description provided for @simulatePayerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Abebe Balcha'**
+  String get simulatePayerHint;
+
+  /// No description provided for @simulatePhoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Payer phone'**
+  String get simulatePhoneLabel;
+
+  /// No description provided for @simulatePhoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 09** ***234'**
+  String get simulatePhoneHint;
+
+  /// No description provided for @simulateSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send test SMS'**
+  String get simulateSend;
+
+  /// No description provided for @simulateDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Test payment captured.'**
+  String get simulateDone;
+
+  /// No description provided for @simulateDropped.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing was captured — is a session running?'**
+  String get simulateDropped;
+
+  /// No description provided for @sessionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Past sessions'**
+  String get sessionsTitle;
+
+  /// No description provided for @sessionNoPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'No payments in this session.'**
+  String get sessionNoPayments;
 
   /// No description provided for @actionFuel.
   ///
@@ -356,6 +482,12 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settingsTitle;
 
+  /// No description provided for @themeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get themeTitle;
+
   /// No description provided for @themeSystem.
   ///
   /// In en, this message translates to:
@@ -373,6 +505,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dark'**
   String get themeDark;
+
+  /// No description provided for @settingsPermissionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions'**
+  String get settingsPermissionsTitle;
+
+  /// No description provided for @settingsDataTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Data'**
+  String get settingsDataTitle;
+
+  /// No description provided for @settingsPermissionSms.
+  ///
+  /// In en, this message translates to:
+  /// **'SMS access (teleBirr 127)'**
+  String get settingsPermissionSms;
+
+  /// No description provided for @settingsPermissionSmsDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Needed to capture payments'**
+  String get settingsPermissionSmsDenied;
+
+  /// No description provided for @settingsPermissionBattery.
+  ///
+  /// In en, this message translates to:
+  /// **'Exempt from battery optimization'**
+  String get settingsPermissionBattery;
+
+  /// No description provided for @settingsPermissionBatteryDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Needed for background capture'**
+  String get settingsPermissionBatteryDenied;
+
+  /// No description provided for @settingsGranted.
+  ///
+  /// In en, this message translates to:
+  /// **'Granted'**
+  String get settingsGranted;
+
+  /// No description provided for @settingsDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Not granted'**
+  String get settingsDenied;
+
+  /// No description provided for @settingsOpenAppSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open app settings'**
+  String get settingsOpenAppSettings;
+
+  /// No description provided for @settingsPrivacyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Private by design'**
+  String get settingsPrivacyTitle;
+
+  /// No description provided for @settingsPrivacyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything stays on this phone. Only teleBirr confirmations from 127 are read — no account, no upload.'**
+  String get settingsPrivacyBody;
+
+  /// No description provided for @settingsVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Taxi Pay v1.0.0'**
+  String get settingsVersion;
 
   /// No description provided for @backupAction.
   ///

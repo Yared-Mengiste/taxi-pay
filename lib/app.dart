@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'data/db/app_database.dart';
 import 'data/db/expense_repository.dart';
 import 'data/db/payment_repository.dart';
+import 'data/db/session_repository.dart';
 import 'data/sms/sms_service.dart';
 import 'l10n/app_localizations.dart';
 import 'l10n/l10n.dart';
@@ -15,12 +16,13 @@ import 'providers/session_provider.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
+import 'screens/settings_screen.dart';
 import 'services/background_task_service.dart';
 import 'services/backup_service.dart';
 import 'services/csv_export_service.dart';
 import 'services/payment_feedback_service.dart';
 import 'services/permissions_service.dart';
-import 'services/reconciliation_service.dart';
+import 'services/simulation_service.dart';
 import 'services/settings_service.dart';
 import 'theme/app_theme.dart';
 
@@ -44,12 +46,11 @@ class TaxiPayApp extends StatefulWidget {
   State<TaxiPayApp> createState() => _TaxiPayAppState();
 }
 
-class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
+class _TaxiPayAppState extends State<TaxiPayApp> {
   final BackgroundTaskService _backgroundTasks = BackgroundTaskService();
   late final PaymentFeedbackService _feedback =
       widget.feedback ?? PaymentFeedbackService();
   StreamSubscription<Payment>? _feedbackSubscription;
-  bool _reconciling = false;
 
   /// Explicit user language choice, or null = follow the system locale.
   String? _languageCode;
@@ -62,17 +63,16 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
     super.initState();
     _languageCode = widget.settings.languageCode;
     _themeMode = _themeModeFromName(widget.settings.themeModeName);
-    WidgetsBinding.instance.addObserver(this);
     // Re-arm the SMS listener on every launch. Cheap and idempotent — and it
     // guarantees the background handler handle is (re)registered with the
     // native side even after the app was killed.
     SmsService.instance.start();
     _backgroundTasks.initialize();
     // "It registered" without looking at the screen: every payment that
-    // lands while we're in the foreground (live listener or reconciliation)
-    // gets a beep + haptic. Background-isolate captures can't beep — that
-    // would need a real notification; the resume-time reconciliation still
-    // makes them visible.
+    // lands while we're in the foreground (live listener, simulator or
+    // reconciliation) gets a beep + haptic. Background-isolate captures
+    // can't beep — that would need a real notification; the resume-time
+    // reconciliation still makes them visible.
     _feedbackSubscription =
         SmsService.instance.capturedPayments.listen((_) {
       _feedback.paymentCaptured();
@@ -88,29 +88,7 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
   @override
   void dispose() {
     _feedbackSubscription?.cancel();
-    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
-  }
-
-  /// The reconciliation guarantee: every time the app comes back to the
-  /// foreground, diff the device's teleBirr inbox against local storage for
-  /// the running session and insert anything the live path missed.
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) async {
-    if (state != AppLifecycleState.resumed || _reconciling) return;
-    _reconciling = true;
-    try {
-      final inserted =
-          await ReconciliationService(widget.app).reconcile();
-      for (final payment in inserted) {
-        SmsService.instance.emitCaptured(payment);
-      }
-    } catch (_) {
-      // Inbox queries throw without READ_SMS (e.g. permission revoked).
-      // The settings screen surfaces that; never crash the resume path.
-    } finally {
-      _reconciling = false;
-    }
   }
 
   Future<void> _setLanguage(String? code) async {
@@ -144,12 +122,15 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
                   create: (_) => SessionProvider(
                     app: widget.app,
                     capturedPayments: SmsService.instance.capturedPayments,
+                    onReconciledPayment:
+                        SmsService.instance.emitCaptured,
                   )..load(),
                 ),
                 ChangeNotifierProvider(
                   create: (_) => DashboardProvider(
                     payments: PaymentRepository(widget.app),
                     expenses: ExpenseRepository(widget.app),
+                    sessions: SessionRepository(widget.app),
                   )..load(),
                 ),
               ],
@@ -157,6 +138,7 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
                 exporter:
                     CsvExportService(PaymentRepository(widget.app)),
                 backup: BackupService(widget.app),
+                simulation: SimulationService(widget.app),
                 languageCode: _languageCode,
                 onLanguageChanged: _setLanguage,
                 themeMode: _themeMode,
@@ -174,13 +156,15 @@ class _TaxiPayAppState extends State<TaxiPayApp> with WidgetsBindingObserver {
   }
 }
 
-/// Two-tab shell: session and dashboard. Both providers sit *above* this
-/// widget, so switching tabs never destroys session state, and an
-/// [IndexedStack] keeps both trees alive (scroll position, chart state).
+/// Three-tab shell: session, dashboard and settings. Both feature providers
+/// sit *above* this widget, so switching tabs never destroys session state,
+/// and an [IndexedStack] keeps all trees alive (scroll position, chart
+/// state, permission statuses).
 class _HomeShell extends StatefulWidget {
   const _HomeShell({
     required this.exporter,
     required this.backup,
+    required this.simulation,
     required this.languageCode,
     required this.onLanguageChanged,
     required this.themeMode,
@@ -189,6 +173,7 @@ class _HomeShell extends StatefulWidget {
 
   final CsvExportService exporter;
   final BackupService backup;
+  final SimulationService simulation;
   final String? languageCode;
   final Future<void> Function(String? code) onLanguageChanged;
   final ThemeMode themeMode;
@@ -208,14 +193,15 @@ class _HomeShellState extends State<_HomeShell> {
       body: IndexedStack(
         index: _index,
         children: [
-          HomeScreen(
+          HomeScreen(simulation: widget.simulation),
+          DashboardScreen(exporter: widget.exporter),
+          SettingsScreen(
             backup: widget.backup,
             languageCode: widget.languageCode,
             onLanguageChanged: widget.onLanguageChanged,
             themeMode: widget.themeMode,
             onThemeModeChanged: widget.onThemeModeChanged,
           ),
-          DashboardScreen(exporter: widget.exporter),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -223,7 +209,7 @@ class _HomeShellState extends State<_HomeShell> {
         onDestinationSelected: (index) {
           setState(() => _index = index);
           // Coming back to the dashboard should reflect payments captured
-          // while the user was on the session tab.
+          // while the user was on another tab.
           if (index == 1) {
             context.read<DashboardProvider>().reload();
           }
@@ -238,6 +224,11 @@ class _HomeShellState extends State<_HomeShell> {
             icon: const Icon(Icons.bar_chart_rounded),
             selectedIcon: const Icon(Icons.bar_chart_rounded),
             label: l10n.navDashboard,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.settings_rounded),
+            selectedIcon: const Icon(Icons.settings_rounded),
+            label: l10n.navSettings,
           ),
         ],
       ),

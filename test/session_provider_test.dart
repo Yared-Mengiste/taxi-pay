@@ -9,6 +9,11 @@ import 'package:taxi_pay/data/db/session_repository.dart';
 import 'package:taxi_pay/models/expense.dart';
 import 'package:taxi_pay/models/payment.dart';
 import 'package:taxi_pay/providers/session_provider.dart';
+import 'package:taxi_pay/services/reconciliation_service.dart';
+
+const _testSmsBody =
+    'You have received ETB 150.00 from Abebe Balcha (09** ***234). '
+    'Transaction ID: 881234567890. Your current balance is ETB 500.00.';
 
 void main() {
   setUpAll(() {
@@ -183,5 +188,68 @@ void main() {
         (await SessionRepository(db).recentSessions(limit: 5))
             .where((s) => s.session.isActive),
         isEmpty);
+  });
+
+  test('method split getters separate telebirr from cash', () async {
+    await provider.load();
+    await provider.start();
+    await provider.addCash(amountCents: 5000);
+    await PaymentRepository(db).insertTelebirrPaymentIfMissing(Payment(
+      transactionId: 'TX1',
+      sessionId: provider.activeSession!.id,
+      method: PaymentMethod.telebirr,
+      amountCents: 9000,
+      smsTimestampMs: 2000,
+      createdAtMs: 2000,
+    ));
+    await provider.load();
+
+    expect(provider.totalCents, 14000);
+    expect(provider.telebirrTotalCents, 9000);
+    expect(provider.cashTotalCents, 5000);
+  });
+
+  test('reconcile() inserts missed inbox payments exactly once', () async {
+    var fetchCalls = 0;
+    final reconciled = <Payment>[];
+    final reconciling = SessionProvider(
+      app: db,
+      capturedPayments: events.stream,
+      reconciliation: ReconciliationService(
+        db,
+        fetchSms: (sinceMs) async {
+          fetchCalls++;
+          return [
+            InboxSmsItem(
+              address: '127',
+              body: _testSmsBody,
+              dateMs: DateTime.now().millisecondsSinceEpoch,
+            ),
+          ];
+        },
+      ),
+      onReconciledPayment: reconciled.add,
+    );
+
+    await reconciling.load();
+    // Without a running session there is nothing to reconcile — the
+    // inbox isn't even queried.
+    expect(await reconciling.reconcile(), 0);
+    expect(fetchCalls, 0);
+
+    await reconciling.start();
+    final inserted = await reconciling.reconcile();
+    expect(inserted, 1);
+    expect(reconciling.paymentCount, 1);
+    expect(reconciling.totalCents, 15000);
+    expect(reconciling.walletBalanceCents, 50000);
+    expect(reconciled, hasLength(1)); // re-emitted for beep + live reload
+    expect(reconciling.isReconciling, isFalse);
+
+    // Idempotent: the same inbox message cannot be inserted twice.
+    expect(await reconciling.reconcile(), 0);
+    expect(reconciling.paymentCount, 1);
+
+    reconciling.dispose();
   });
 }

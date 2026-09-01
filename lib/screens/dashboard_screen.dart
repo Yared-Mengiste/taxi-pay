@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../data/db/session_repository.dart';
 import '../l10n/l10n.dart';
 import '../models/payment.dart';
 import '../providers/dashboard_provider.dart';
@@ -10,6 +11,7 @@ import '../services/csv_export_service.dart';
 import '../util/dates.dart';
 import '../util/money.dart';
 import '../widgets/export_range_sheet.dart';
+import '../widgets/session_details_sheet.dart';
 
 /// Revenue over time: period toggle, summary numbers, one bar per
 /// day/week/month. Read-only — everything is aggregated from the DB.
@@ -54,6 +56,12 @@ class DashboardScreen extends StatelessWidget {
                   _SummaryCard(dashboard: dashboard),
                   const SizedBox(height: 16),
                   _RevenueChartCard(dashboard: dashboard),
+                ],
+                // Session history answers "what did I make on Tuesday?" —
+                // shown even when the chart window has no revenue.
+                if (dashboard.sessions.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  _PastSessionsSection(dashboard: dashboard),
                 ],
               ],
             ),
@@ -459,6 +467,107 @@ class _EmptyDashboard extends StatelessWidget {
                     color: scheme.onSurfaceVariant,
                   ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Every finished shift, newest first, each tappable for the full
+/// money-in / money-out timeline of that session.
+class _PastSessionsSection extends StatelessWidget {
+  const _PastSessionsSection({required this.dashboard});
+
+  final DashboardProvider dashboard;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.history_rounded, size: 18, color: scheme.primary),
+            const SizedBox(width: 8),
+            Text(
+              context.l10n.sessionsTitle,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: scheme.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        for (final summary in dashboard.sessions)
+          _SessionTile(
+            summary: summary,
+            onTap: () => showSessionDetailsSheet(
+              context,
+              dashboard: dashboard,
+              summary: summary,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _SessionTile extends StatelessWidget {
+  const _SessionTile({required this.summary, required this.onTap});
+
+  final SessionSummary summary;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final locale = Localizations.maybeLocaleOf(context)?.toString();
+    final session = summary.session;
+    final endedMs = session.endedAtMs ?? session.startedAtMs;
+    final subtitle = StringBuffer(
+      '${l10n.paymentsCount(summary.paymentCount)} · '
+      '${formatDuration(session.startedAtMs, endedMs)}',
+    );
+    if (summary.expenseTotalCents > 0) {
+      subtitle.write(' · ${l10n.netLabel(formatBirr(summary.netCents))}');
+    }
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        onTap: onTap,
+        leading: CircleAvatar(
+          backgroundColor: scheme.primaryContainer,
+          child: Icon(
+            Icons.directions_car_rounded,
+            color: scheme.onPrimaryContainer,
+          ),
+        ),
+        title: Text(
+          formatDayTime(session.startedAtMs, locale: locale),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Text(
+          subtitle.toString(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              formatBirr(summary.totalCents),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: scheme.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(width: 4),
+            Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
           ],
         ),
       ),

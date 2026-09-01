@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -5,7 +7,7 @@ import '../l10n/l10n.dart';
 import '../models/feed_item.dart';
 import '../models/payment.dart';
 import '../providers/session_provider.dart';
-import '../services/backup_service.dart';
+import '../services/simulation_service.dart';
 import '../util/dates.dart';
 import '../util/money.dart';
 import '../widgets/add_cash_sheet.dart';
@@ -13,24 +15,14 @@ import '../widgets/add_expense_sheet.dart';
 import '../widgets/edit_cash_sheet.dart';
 import '../widgets/expense_tile.dart';
 import '../widgets/payment_tile.dart';
+import '../widgets/simulate_payment_sheet.dart';
 
 /// The one screen a driver uses mid-shift: the session control, the live
 /// total and the feed of incoming payments. Reachable one tap after launch.
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({
-    super.key,
-    this.backup,
-    this.languageCode,
-    this.onLanguageChanged,
-    this.themeMode,
-    this.onThemeModeChanged,
-  });
+  const HomeScreen({super.key, required this.simulation});
 
-  final BackupService? backup;
-  final String? languageCode;
-  final Future<void> Function(String? code)? onLanguageChanged;
-  final ThemeMode? themeMode;
-  final Future<void> Function(ThemeMode mode)? onThemeModeChanged;
+  final SimulationService simulation;
 
   @override
   Widget build(BuildContext context) {
@@ -39,21 +31,20 @@ class HomeScreen extends StatelessWidget {
         title: const Text('Taxi Pay'),
         centerTitle: false,
         actions: [
-          if (onLanguageChanged != null)
-            IconButton(
-              tooltip: context.l10n.settingsTitle,
-              onPressed: () => showSettingsSheet(
-                context,
-                currentLanguage: languageCode,
-                onLanguageSelected: onLanguageChanged!,
-                currentTheme: themeMode ?? ThemeMode.system,
-                onThemeSelected: onThemeModeChanged!,
-                onExportBackup: backup == null
-                    ? null
-                    : () => _exportBackup(context, backup!),
-              ),
-              icon: const Icon(Icons.settings_rounded),
+          // Test-payment trigger: enabled only while a session runs,
+          // because capture drops everything outside a session.
+          Consumer<SessionProvider>(
+            builder: (context, session, _) => IconButton(
+              tooltip: context.l10n.simulateTooltip,
+              onPressed: session.isRunning
+                  ? () => showSimulatePaymentSheet(
+                        context,
+                        simulation: simulation,
+                      )
+                  : null,
+              icon: const Icon(Icons.science_outlined),
             ),
+          ),
         ],
       ),
       body: Consumer<SessionProvider>(
@@ -63,112 +54,6 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-
-  /// Copies the database and opens the share sheet; the snackbar lands
-  /// once sharing finishes (or fails). Messenger and strings are captured
-  /// before the await — the sheet and its context are gone by then.
-  Future<void> _exportBackup(BuildContext context, BackupService backup) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final doneMessage = context.l10n.backupDone;
-    final failMessage = context.l10n.backupFailed;
-    try {
-      final file = await backup.exportBackup();
-      if (file == null) throw const _BackupFailedException();
-      messenger.showSnackBar(SnackBar(content: Text(doneMessage)));
-    } catch (_) {
-      messenger.showSnackBar(SnackBar(content: Text(failMessage)));
-    }
-  }
-}
-
-class _BackupFailedException implements Exception {
-  const _BackupFailedException();
-}
-
-/// Settings sheet: language (Amharic primary, English secondary) and
-/// theme mode. Small, focused — two choices, no settings screen needed.
-Future<void> showSettingsSheet(
-  BuildContext context, {
-  required String? currentLanguage,
-  required Future<void> Function(String? code) onLanguageSelected,
-  required ThemeMode currentTheme,
-  required Future<void> Function(ThemeMode mode) onThemeSelected,
-  VoidCallback? onExportBackup,
-}) {
-  final l10n = context.l10n;
-  return showModalBottomSheet<void>(
-    context: context,
-    builder: (sheetContext) => SafeArea(
-      child: ListView(
-        shrinkWrap: true,
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(l10n.settingsTitle,
-                style: Theme.of(sheetContext).textTheme.titleMedium),
-          ),
-          if (onExportBackup != null) ...[
-            ListTile(
-              leading: const Icon(Icons.upload_file_rounded),
-              title: Text(l10n.backupAction),
-              subtitle: Text(l10n.backupSubtitle),
-              onTap: () {
-                // Pop first: the backup flow shows the system share sheet,
-                // and our modal shouldn't be stacked underneath it.
-                Navigator.of(sheetContext).pop();
-                onExportBackup();
-              },
-            ),
-            const Divider(),
-          ],
-          RadioGroup<String?>(
-            groupValue: currentLanguage,
-            onChanged: (value) {
-              Navigator.of(sheetContext).pop();
-              onLanguageSelected(value);
-            },
-            child: Column(
-              children: [
-                for (final (code, label) in [
-                  (null, l10n.languageSystem),
-                  ('am', l10n.languageAmharic),
-                  ('en', l10n.languageEnglish),
-                ])
-                  RadioListTile<String?>(
-                    value: code,
-                    title: Text(label),
-                  ),
-              ],
-            ),
-          ),
-          const Divider(),
-          RadioGroup<ThemeMode>(
-            groupValue: currentTheme,
-            onChanged: (value) {
-              if (value == null) return;
-              Navigator.of(sheetContext).pop();
-              onThemeSelected(value);
-            },
-            child: Column(
-              children: [
-                for (final (mode, label) in [
-                  (ThemeMode.system, l10n.themeSystem),
-                  (ThemeMode.light, l10n.themeLight),
-                  (ThemeMode.dark, l10n.themeDark),
-                ])
-                  RadioListTile<ThemeMode>(
-                    value: mode,
-                    title: Text(label),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-        ],
-      ),
-    ),
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -388,16 +273,25 @@ class _LiveSessionView extends StatelessWidget {
                       Icon(Icons.my_location_rounded,
                           size: 16, color: scheme.onPrimaryContainer),
                       const SizedBox(width: 6),
-                      Text(
-                        l10n.liveSince(formatClock(
-                            session.activeSession!.startedAtMs,
-                            locale: locale)),
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                              color: scheme.onPrimaryContainer,
-                              letterSpacing: 1.2,
-                              fontWeight: FontWeight.w700,
-                            ),
+                      Expanded(
+                        child: Text(
+                          l10n.liveSince(formatClock(
+                              session.activeSession!.startedAtMs,
+                              locale: locale)),
+                          style:
+                              Theme.of(context).textTheme.labelMedium?.copyWith(
+                                    color: scheme.onPrimaryContainer,
+                                    letterSpacing: 1.2,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                        ),
                       ),
+                      // Elapsed clock + manual inbox diff — the two things
+                      // a driver glances at mid-shift.
+                      _ElapsedTicker(
+                          startedAtMs: session.activeSession!.startedAtMs),
+                      const SizedBox(width: 8),
+                      _SyncButton(session: session),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -413,6 +307,26 @@ class _LiveSessionView extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: scheme.onPrimaryContainer,
                         ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _LiveMethodStat(
+                          icon: Icons.phone_iphone_rounded,
+                          label: 'teleBirr',
+                          amountCents: session.telebirrTotalCents,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _LiveMethodStat(
+                          icon: Icons.payments_rounded,
+                          label: l10n.actionCash,
+                          amountCents: session.cashTotalCents,
+                        ),
+                      ),
+                    ],
                   ),
                   if (session.expenseTotalCents > 0) ...[
                     const SizedBox(height: 4),
@@ -454,8 +368,7 @@ class _LiveSessionView extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: FilledButton.icon(
-                          onPressed: () =>
-                              context.read<SessionProvider>().stop(),
+                          onPressed: () => _confirmAndStop(context),
                           style: FilledButton.styleFrom(
                             backgroundColor: scheme.errorContainer,
                             foregroundColor: scheme.onErrorContainer,
@@ -472,6 +385,186 @@ class _LiveSessionView extends StatelessWidget {
           ),
         ),
         Expanded(child: _PaymentFeed(session: session)),
+      ],
+    );
+  }
+
+  /// Stop is destructive (ends the shift and freezes the feed), so it goes
+  /// through a confirm dialog — the same pattern as cash-entry deletion.
+  /// The provider is captured before the await (async-gap rule).
+  Future<void> _confirmAndStop(BuildContext context) async {
+    final l10n = context.l10n;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.stopConfirmTitle),
+        content: Text(l10n.stopConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.stopConfirmCancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor:
+                  Theme.of(dialogContext).colorScheme.errorContainer,
+              foregroundColor:
+                  Theme.of(dialogContext).colorScheme.onErrorContainer,
+            ),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.stopConfirmAction),
+          ),
+        ],
+      ),
+    );
+    if (confirmed ?? false) await session.stop();
+  }
+}
+
+/// The session clock: `2h 14m`, ticking once a second. Scoped to this
+/// tiny widget so the rest of the live view doesn't rebuild every tick.
+class _ElapsedTicker extends StatefulWidget {
+  const _ElapsedTicker({required this.startedAtMs});
+
+  final int startedAtMs;
+
+  @override
+  State<_ElapsedTicker> createState() => _ElapsedTickerState();
+}
+
+class _ElapsedTickerState extends State<_ElapsedTicker> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Text(
+      formatDuration(
+          widget.startedAtMs, DateTime.now().millisecondsSinceEpoch),
+      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: scheme.onPrimaryContainer,
+            fontWeight: FontWeight.w700,
+            fontFeatures: [FontFeature.tabularFigures()],
+          ),
+    );
+  }
+}
+
+/// Manual "sync now": runs one inbox reconciliation pass and reports the
+/// outcome. The icon morphs into a spinner while it runs.
+class _SyncButton extends StatelessWidget {
+  const _SyncButton({required this.session});
+
+  final SessionProvider session;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      width: 32,
+      height: 32,
+      child: session.isReconciling
+          ? Center(
+              child: SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: scheme.onPrimaryContainer,
+                ),
+              ),
+            )
+          : IconButton(
+              tooltip: l10n.syncTooltip,
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              color: scheme.onPrimaryContainer,
+              onPressed: () => _syncNow(context),
+              icon: const Icon(Icons.sync_rounded, size: 20),
+            ),
+    );
+  }
+
+  Future<void> _syncNow(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
+    // Strings captured before the await — reconcile hits the inbox.
+    final recovered = l10n.syncRecovered;
+    final upToDate = l10n.syncUpToDate;
+    final failed = l10n.syncFailed;
+    try {
+      final inserted = await session.reconcile();
+      messenger.showSnackBar(SnackBar(
+        content: Text(
+            inserted > 0 ? recovered(inserted) : upToDate),
+      ));
+    } catch (_) {
+      // Inbox reads throw without READ_SMS — the one error worth naming,
+      // because "silently nothing" looks like "no missed payments".
+      messenger.showSnackBar(SnackBar(content: Text(failed)));
+    }
+  }
+}
+
+/// teleBirr vs cash split on the live card — same shape as the dashboard's
+/// method chips, on container colors.
+class _LiveMethodStat extends StatelessWidget {
+  const _LiveMethodStat({
+    required this.icon,
+    required this.label,
+    required this.amountCents,
+  });
+
+  final IconData icon;
+  final String label;
+  final int amountCents;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 18, color: scheme.onPrimaryContainer),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: scheme.onPrimaryContainer,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              Text(
+                amountCents == 0 ? '—' : formatBirr(amountCents),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onPrimaryContainer,
+                    ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -520,33 +613,42 @@ class _EmptyFeed extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.sms_outlined, size: 56, color: scheme.outline),
-            const SizedBox(height: 16),
-            Text(
-              l10n.feedWaitingTitle,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.feedWaitingBody,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
+    // Centered when there's room, scrollable when the live card (taller
+    // since the method split landed) leaves little — never overflows.
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.sms_outlined, size: 56, color: scheme.outline),
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.feedWaitingTitle,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.feedWaitingBody,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: onAddCash,
+                    icon: const Icon(Icons.payments_outlined),
+                    label: Text(l10n.feedAddCash),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: onAddCash,
-              icon: const Icon(Icons.payments_outlined),
-              label: Text(l10n.feedAddCash),
-            ),
-          ],
+          ),
         ),
       ),
     );
