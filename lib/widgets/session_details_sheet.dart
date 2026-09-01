@@ -39,56 +39,112 @@ Future<void> showSessionDetailsSheet(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.flag_circle_rounded,
-                            color: scheme.primary),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            formatDayTime(session.startedAtMs,
-                                locale: Localizations.maybeLocaleOf(
-                                    sheetContext)
-                                    ?.toString()),
-                            style: Theme.of(sheetContext)
-                                .textTheme
-                                .titleMedium,
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: scheme.tertiaryContainer,
+                            borderRadius: BorderRadius.circular(11),
+                          ),
+                          child: Icon(
+                            Icons.flag_circle_rounded,
+                            color: scheme.onTertiaryContainer,
+                            size: 22,
                           ),
                         ),
-                        Text(
-                          formatDuration(session.startedAtMs, endedMs),
-                          style: Theme.of(sheetContext)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(color: scheme.onSurfaceVariant),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                formatDayTime(session.startedAtMs,
+                                    locale: Localizations.maybeLocaleOf(
+                                            sheetContext)
+                                        ?.toString()),
+                                style: Theme.of(sheetContext)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              Text(
+                                formatDuration(session.startedAtMs, endedMs),
+                                style: Theme.of(sheetContext)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                        color: scheme.onSurfaceVariant),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 14),
                     Text(
                       formatBirr(summary.totalCents),
                       style: Theme.of(sheetContext)
                           .textTheme
                           .headlineLarge
-                          ?.copyWith(fontWeight: FontWeight.w800),
+                          ?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: scheme.primary,
+                            fontFeatures: const [
+                              FontFeature.tabularFigures()
+                            ],
+                          ),
                     ),
+                    const SizedBox(height: 4),
                     if (summary.expenseTotalCents > 0) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        '${l10n.expensesLabel(formatBirr(summary.expenseTotalCents))} · '
-                        '${l10n.netLabel(formatBirr(summary.netCents))}',
-                        style: Theme.of(sheetContext)
-                            .textTheme
-                            .titleMedium
-                            ?.copyWith(
-                              color: scheme.primary,
-                              fontWeight: FontWeight.w700,
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: scheme.errorContainer.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(8),
                             ),
+                            child: Text(
+                              l10n.expensesLabel(
+                                  formatBirr(summary.expenseTotalCents)),
+                              style: Theme.of(sheetContext)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(
+                                    color: scheme.error,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: scheme.tertiaryContainer,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              l10n.netLabel(formatBirr(summary.netCents)),
+                              style: Theme.of(sheetContext)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(
+                                    color: scheme.onTertiaryContainer,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 6),
                     ],
                     Text(
                       l10n.paymentsCount(summary.paymentCount),
@@ -100,7 +156,10 @@ Future<void> showSessionDetailsSheet(
                   ],
                 ),
               ),
-              const Divider(height: 1),
+              Divider(
+                height: 1,
+                color: scheme.outlineVariant.withValues(alpha: 0.35),
+              ),
               Expanded(
                 child: snapshot.connectionState != ConnectionState.done
                     ? const Center(child: CircularProgressIndicator())

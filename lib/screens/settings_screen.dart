@@ -86,61 +86,88 @@ class _SettingsScreenState extends State<SettingsScreen>
         centerTitle: false,
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         children: [
           _sectionHeader(context, Icons.language_rounded, l10n.languageTitle),
-          RadioGroup<String?>(
-            groupValue: widget.languageCode,
-            onChanged: widget.onLanguageChanged,
-            child: Column(
-              children: [
-                for (final (code, label) in [
-                  (null, l10n.languageSystem),
-                  ('am', l10n.languageAmharic),
-                  ('en', l10n.languageEnglish),
-                ])
-                  RadioListTile<String?>(
-                    value: code,
-                    title: Text(label),
-                  ),
-              ],
+          Card(
+            margin: const EdgeInsets.only(bottom: 16),
+            child: RadioGroup<String?>(
+              groupValue: widget.languageCode,
+              onChanged: widget.onLanguageChanged,
+              child: Column(
+                children: [
+                  for (final (code, label) in [
+                    (null, l10n.languageSystem),
+                    ('am', l10n.languageAmharic),
+                    ('en', l10n.languageEnglish),
+                  ])
+                    RadioListTile<String?>(
+                      value: code,
+                      title: Text(
+                        label,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 8),
           _sectionHeader(context, Icons.palette_rounded, l10n.themeTitle),
-          RadioGroup<ThemeMode>(
-            groupValue: widget.themeMode,
-            onChanged: (mode) {
-              if (mode != null) widget.onThemeModeChanged(mode);
-            },
-            child: Column(
-              children: [
-                for (final (mode, label) in [
-                  (ThemeMode.system, l10n.themeSystem),
-                  (ThemeMode.light, l10n.themeLight),
-                  (ThemeMode.dark, l10n.themeDark),
-                ])
-                  RadioListTile<ThemeMode>(
-                    value: mode,
-                    title: Text(label),
-                  ),
-              ],
+          Card(
+            margin: const EdgeInsets.only(bottom: 16),
+            child: RadioGroup<ThemeMode>(
+              groupValue: widget.themeMode,
+              onChanged: (mode) {
+                if (mode != null) widget.onThemeModeChanged(mode);
+              },
+              child: Column(
+                children: [
+                  for (final (mode, label) in [
+                    (ThemeMode.light, l10n.themeLight),
+                    (ThemeMode.dark, l10n.themeDark),
+                    (ThemeMode.system, l10n.themeSystem),
+                  ])
+                    RadioListTile<ThemeMode>(
+                      value: mode,
+                      title: Text(
+                        label,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 8),
           if (widget.backup != null) ...[
             _sectionHeader(
                 context, Icons.save_rounded, l10n.settingsDataTitle),
-            ListTile(
-              leading: const Icon(Icons.upload_file_rounded),
-              title: Text(l10n.backupAction),
-              subtitle: Text(l10n.backupSubtitle),
-              onTap: () => _exportBackup(context, widget.backup!),
+            Card(
+              margin: const EdgeInsets.only(bottom: 16),
+              child: ListTile(
+                leading: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.upload_file_rounded,
+                    size: 20,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+                title: Text(
+                  l10n.backupAction,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                subtitle: Text(l10n.backupSubtitle),
+                onTap: () => _exportBackup(context, widget.backup!),
+              ),
             ),
-            const SizedBox(height: 8),
           ],
-          _sectionHeader(
-              context, Icons.admin_panel_settings_rounded, l10n.settingsPermissionsTitle),
+          _sectionHeader(context, Icons.admin_panel_settings_rounded,
+              l10n.settingsPermissionsTitle),
           _PermissionsCard(
             smsGranted: _smsGranted,
             batteryExempt: _batteryExempt,
@@ -148,15 +175,24 @@ class _SettingsScreenState extends State<SettingsScreen>
           ),
           const SizedBox(height: 16),
           _PrivacyCard(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           Center(
-            child: Text(
-              l10n.settingsVersion,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                l10n.settingsVersion,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
             ),
           ),
+          const SizedBox(height: 16),
         ],
       ),
     );
@@ -165,16 +201,24 @@ class _SettingsScreenState extends State<SettingsScreen>
   Widget _sectionHeader(BuildContext context, IconData icon, String title) {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+      padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: scheme.primary),
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: scheme.primaryContainer,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 16, color: scheme.primary),
+          ),
           const SizedBox(width: 8),
           Text(
             title,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   color: scheme.primary,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
                 ),
           ),
         ],
@@ -238,10 +282,10 @@ class _PermissionsCard extends StatelessWidget {
               granted: batteryExempt,
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: OutlinedButton.icon(
+                child: FilledButton.tonalIcon(
                   onPressed: onOpenSettings,
                   icon: const Icon(Icons.settings_rounded, size: 18),
                   label: Text(l10n.settingsOpenAppSettings),
@@ -276,11 +320,25 @@ class _PermissionRow extends StatelessWidget {
     final checking = granted == null;
     return ListTile(
       dense: true,
-      leading: Icon(
-        icon,
-        color: grantedNow ? scheme.primary : scheme.onSurfaceVariant,
+      leading: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: grantedNow
+              ? scheme.tertiaryContainer
+              : scheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: grantedNow ? scheme.onTertiaryContainer : scheme.onSurfaceVariant,
+        ),
       ),
-      title: Text(title),
+      title: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.w600),
+      ),
       subtitle: checking || grantedNow ? null : Text(deniedSubtitle),
       trailing: checking
           // Static placeholder, deliberately not a spinner: the channel
@@ -288,25 +346,38 @@ class _PermissionRow extends StatelessWidget {
           // progress indicator animates forever while pending (which
           // also makes `pumpAndSettle` in widget tests time out).
           ? const SizedBox(width: 18, height: 18)
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  grantedNow
-                      ? Icons.check_circle_rounded
-                      : Icons.error_outline_rounded,
-                  size: 18,
-                  color: grantedNow ? scheme.primary : scheme.error,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  grantedNow ? l10n.settingsGranted : l10n.settingsDenied,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: grantedNow ? scheme.primary : scheme.error,
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-              ],
+          : Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: grantedNow
+                    ? scheme.tertiaryContainer
+                    : scheme.errorContainer.withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    grantedNow
+                        ? Icons.check_circle_rounded
+                        : Icons.error_outline_rounded,
+                    size: 14,
+                    color: grantedNow
+                        ? scheme.onTertiaryContainer
+                        : scheme.onErrorContainer,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    grantedNow ? l10n.settingsGranted : l10n.settingsDenied,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: grantedNow
+                              ? scheme.onTertiaryContainer
+                              : scheme.onErrorContainer,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ],
+              ),
             ),
     );
   }
@@ -320,25 +391,40 @@ class _PrivacyCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(Icons.verified_user_rounded, color: scheme.primary),
-                const SizedBox(width: 8),
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: scheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.verified_user_rounded,
+                    color: scheme.primary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
                 Text(
                   l10n.settingsPrivacyTitle,
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               l10n.settingsPrivacyBody,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: scheme.onSurfaceVariant,
+                    height: 1.4,
                   ),
             ),
           ],

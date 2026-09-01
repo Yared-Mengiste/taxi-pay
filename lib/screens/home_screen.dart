@@ -26,23 +26,49 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Taxi Pay'),
+        title: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF005CB9), Color(0xFF00A859)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: const Icon(
+                Icons.local_taxi_rounded,
+                size: 18,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Text('Taxi Pay'),
+          ],
+        ),
         centerTitle: false,
         actions: [
           // Test-payment trigger: enabled only while a session runs,
           // because capture drops everything outside a session.
           Consumer<SessionProvider>(
-            builder: (context, session, _) => IconButton(
-              tooltip: context.l10n.simulateTooltip,
-              onPressed: session.isRunning
-                  ? () => showSimulatePaymentSheet(
-                        context,
-                        simulation: simulation,
-                      )
-                  : null,
-              icon: const Icon(Icons.science_outlined),
+            builder: (context, session, _) => Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: IconButton.filledTonal(
+                tooltip: context.l10n.simulateTooltip,
+                onPressed: session.isRunning
+                    ? () => showSimulatePaymentSheet(
+                          context,
+                          simulation: simulation,
+                        )
+                    : null,
+                icon: const Icon(Icons.science_outlined, size: 20),
+              ),
             ),
           ),
         ],
@@ -69,9 +95,9 @@ class _IdleView extends StatelessWidget {
   Widget build(BuildContext context) {
     final lastEnded = session.lastEndedSession;
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       children: [
-        if (lastEnded != null)
+        if (lastEnded != null) ...[
           _ShiftSummaryCard(
             startedAtMs: lastEnded.startedAtMs,
             endedAtMs: lastEnded.endedAtMs ?? lastEnded.startedAtMs,
@@ -80,10 +106,13 @@ class _IdleView extends StatelessWidget {
             netCents: session.lastEndedNetCents,
             paymentCount: session.lastEndedPayments.length,
           ),
-        const SizedBox(height: 24),
+          const SizedBox(height: 32),
+        ] else ...[
+          const SizedBox(height: 48),
+        ],
         _StartButton(onPressed: () => context.read<SessionProvider>().start()),
         if (session.walletBalanceCents != null) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           _WalletBadge(cents: session.walletBalanceCents!),
         ],
       ],
@@ -103,22 +132,34 @@ class _WalletBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final effectiveColor = color ?? scheme.onSurfaceVariant;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.account_balance_wallet_rounded,
-            size: 16, color: effectiveColor),
-        const SizedBox(width: 6),
-        Text(
-          context.l10n.walletBalance(formatBirr(cents)),
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: effectiveColor,
-                fontWeight: FontWeight.w600,
-              ),
+    final effectiveColor = color ?? scheme.primary;
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: scheme.primaryContainer.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: scheme.primary.withValues(alpha: 0.2),
+          ),
         ),
-      ],
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.account_balance_wallet_rounded,
+                size: 16, color: effectiveColor),
+            const SizedBox(width: 8),
+            Text(
+              context.l10n.walletBalance(formatBirr(cents)),
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: effectiveColor,
+                    fontWeight: FontWeight.w700,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -134,37 +175,58 @@ class _StartButton extends StatelessWidget {
     return Center(
       child: Column(
         children: [
-          SizedBox(
-            width: 132,
-            height: 132,
-            child: FilledButton(
-              onPressed: onPressed,
-              style: FilledButton.styleFrom(
-                shape: const CircleBorder(),
-                padding: EdgeInsets.zero,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.play_arrow_rounded, size: 56),
-                  Text(
-                    context.l10n.homeStart,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(letterSpacing: 2),
+          Container(
+            width: 148,
+            height: 148,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: scheme.primary.withValues(alpha: 0.28),
+                  blurRadius: 24,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: Ink(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF005CB9), Color(0xFF003E80)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                ],
+                  shape: BoxShape.circle,
+                ),
+                child: InkWell(
+                  onTap: onPressed,
+                  customBorder: const CircleBorder(),
+                  child: const Center(
+                    child: Icon(
+                      Icons.play_arrow_rounded,
+                      size: 68,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          Text(
-            context.l10n.homeIdleHint,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              context.l10n.homeIdleHint,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+            ),
           ),
         ],
       ),
@@ -193,50 +255,114 @@ class _ShiftSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
-    return Card(
-      color: scheme.surfaceContainerHighest,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: 0.35),
+        ),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: scheme.tertiaryContainer,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.flag_circle_rounded,
+                  color: scheme.onTertiaryContainer,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  context.l10n.shiftFinished,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: scheme.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  formatDuration(startedAtMs, endedAtMs),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            formatBirr(totalCents),
+            style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: scheme.primary,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+          ),
+          const SizedBox(height: 6),
+          if (expenseTotalCents > 0) ...[
             Row(
               children: [
-                Icon(Icons.flag_circle_rounded, color: scheme.primary),
-                const SizedBox(width: 8),
-                Text(
-                  context.l10n.shiftFinished,
-                  style: Theme.of(context).textTheme.titleMedium,
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: scheme.errorContainer.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    l10n.expensesLabel(formatBirr(expenseTotalCents)),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: scheme.error,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: scheme.tertiaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    l10n.netLabel(formatBirr(netCents)),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: scheme.onTertiaryContainer,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              formatBirr(totalCents),
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineLarge
-                  ?.copyWith(fontWeight: FontWeight.w800),
-            ),
-            if (expenseTotalCents > 0) ...[
-              const SizedBox(height: 4),
-              Text(
-                '${l10n.expensesLabel(formatBirr(expenseTotalCents))} · '
-                '${l10n.netLabel(formatBirr(netCents))}',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: scheme.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-            ],
-            Text(
-              '${l10n.paymentsCount(paymentCount)} · ${formatDuration(startedAtMs, endedAtMs)}',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-            ),
           ],
-        ),
+          Text(
+            l10n.paymentsCount(paymentCount),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+          ),
+        ],
       ),
     );
   }
@@ -260,9 +386,23 @@ class _LiveSessionView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Card(
-            color: scheme.primaryContainer,
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF005CB9), Color(0xFF003E80)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF005CB9).withValues(alpha: 0.25),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -270,9 +410,16 @@ class _LiveSessionView extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.my_location_rounded,
-                          size: 16, color: scheme.onPrimaryContainer),
-                      const SizedBox(width: 6),
+                      // Pulsing green live indicator
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0xFF00E676),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           l10n.liveSince(formatClock(
@@ -280,35 +427,44 @@ class _LiveSessionView extends StatelessWidget {
                               locale: locale)),
                           style:
                               Theme.of(context).textTheme.labelMedium?.copyWith(
-                                    color: scheme.onPrimaryContainer,
-                                    letterSpacing: 1.2,
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                    letterSpacing: 1.1,
                                     fontWeight: FontWeight.w700,
                                   ),
                         ),
                       ),
-                      // Elapsed clock + manual inbox diff — the two things
-                      // a driver glances at mid-shift.
-                      _ElapsedTicker(
-                          startedAtMs: session.activeSession!.startedAtMs),
+                      // Elapsed clock
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: _ElapsedTicker(
+                            startedAtMs: session.activeSession!.startedAtMs),
+                      ),
                       const SizedBox(width: 8),
                       _SyncButton(session: session),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Text(
                     formatBirr(session.totalCents),
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          color: scheme.onPrimaryContainer,
-                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     l10n.paymentsThisSession(session.paymentCount),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: scheme.onPrimaryContainer,
+                          color: Colors.white.withValues(alpha: 0.8),
                         ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   Row(
                     children: [
                       Expanded(
@@ -316,44 +472,64 @@ class _LiveSessionView extends StatelessWidget {
                           icon: Icons.phone_iphone_rounded,
                           label: 'teleBirr',
                           amountCents: session.telebirrTotalCents,
+                          isTelebirr: true,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: _LiveMethodStat(
                           icon: Icons.payments_rounded,
                           label: l10n.actionCash,
                           amountCents: session.cashTotalCents,
+                          isTelebirr: false,
                         ),
                       ),
                     ],
                   ),
                   if (session.expenseTotalCents > 0) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      '${l10n.expensesLabel(formatBirr(session.expenseTotalCents))} · '
-                      '${l10n.netLabel(formatBirr(session.netCents))}',
-                      style:
-                          Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: scheme.onPrimaryContainer,
-                                fontWeight: FontWeight.w700,
-                              ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '${l10n.expensesLabel(formatBirr(session.expenseTotalCents))} · '
+                        '${l10n.netLabel(formatBirr(session.netCents))}',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures()
+                              ],
+                            ),
+                      ),
                     ),
                   ],
                   if (session.walletBalanceCents != null) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
                     _WalletBadge(
                       cents: session.walletBalanceCents!,
-                      color: scheme.onPrimaryContainer,
+                      color: Colors.white,
                     ),
                   ],
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 18),
                   Row(
                     children: [
                       Expanded(
                         child: FilledButton.tonalIcon(
                           onPressed: () => promptAndAddExpense(context),
-                          icon: const Icon(Icons.local_gas_station_rounded),
+                          style: FilledButton.styleFrom(
+                            backgroundColor:
+                                Colors.white.withValues(alpha: 0.2),
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(0, 44),
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                          ),
+                          icon: const Icon(Icons.local_gas_station_rounded,
+                              size: 18),
                           label: Text(l10n.actionFuel),
                         ),
                       ),
@@ -361,7 +537,14 @@ class _LiveSessionView extends StatelessWidget {
                       Expanded(
                         child: FilledButton.tonalIcon(
                           onPressed: () => promptAndAddCash(context),
-                          icon: const Icon(Icons.payments_rounded),
+                          style: FilledButton.styleFrom(
+                            backgroundColor:
+                                Colors.white.withValues(alpha: 0.2),
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(0, 44),
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                          ),
+                          icon: const Icon(Icons.payments_rounded, size: 18),
                           label: Text(l10n.actionCash),
                         ),
                       ),
@@ -370,10 +553,13 @@ class _LiveSessionView extends StatelessWidget {
                         child: FilledButton.icon(
                           onPressed: () => _confirmAndStop(context),
                           style: FilledButton.styleFrom(
-                            backgroundColor: scheme.errorContainer,
-                            foregroundColor: scheme.onErrorContainer,
+                            backgroundColor: const Color(0xFFDC2626),
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(0, 44),
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
                           ),
-                          icon: const Icon(Icons.stop_circle_rounded),
+                          icon:
+                              const Icon(Icons.stop_circle_rounded, size: 18),
                           label: Text(l10n.actionStop),
                         ),
                       ),
@@ -407,9 +593,9 @@ class _LiveSessionView extends StatelessWidget {
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor:
-                  Theme.of(dialogContext).colorScheme.errorContainer,
+                  Theme.of(dialogContext).colorScheme.error,
               foregroundColor:
-                  Theme.of(dialogContext).colorScheme.onErrorContainer,
+                  Theme.of(dialogContext).colorScheme.onError,
             ),
             onPressed: () => Navigator.of(dialogContext).pop(true),
             child: Text(l10n.stopConfirmAction),
@@ -451,14 +637,13 @@ class _ElapsedTickerState extends State<_ElapsedTicker> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Text(
       formatDuration(
           widget.startedAtMs, DateTime.now().millisecondsSinceEpoch),
       style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: scheme.onPrimaryContainer,
+            color: Colors.white,
             fontWeight: FontWeight.w700,
-            fontFeatures: [FontFeature.tabularFigures()],
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
     );
   }
@@ -474,18 +659,21 @@ class _SyncButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
-    return SizedBox(
+    return Container(
       width: 32,
       height: 32,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.15),
+        shape: BoxShape.circle,
+      ),
       child: session.isReconciling
-          ? Center(
+          ? const Center(
               child: SizedBox(
-                width: 18,
-                height: 18,
+                width: 16,
+                height: 16,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: scheme.onPrimaryContainer,
+                  color: Colors.white,
                 ),
               ),
             )
@@ -494,9 +682,9 @@ class _SyncButton extends StatelessWidget {
               visualDensity: VisualDensity.compact,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
-              color: scheme.onPrimaryContainer,
+              color: Colors.white,
               onPressed: () => _syncNow(context),
-              icon: const Icon(Icons.sync_rounded, size: 20),
+              icon: const Icon(Icons.sync_rounded, size: 18),
             ),
     );
   }
@@ -522,50 +710,76 @@ class _SyncButton extends StatelessWidget {
   }
 }
 
-/// teleBirr vs cash split on the live card — same shape as the dashboard's
-/// method chips, on container colors.
+/// teleBirr vs cash split on the live card — frosted glass look on gradient background
 class _LiveMethodStat extends StatelessWidget {
   const _LiveMethodStat({
     required this.icon,
     required this.label,
     required this.amountCents,
+    required this.isTelebirr,
   });
 
   final IconData icon;
   final String label;
   final int amountCents;
+  final bool isTelebirr;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 18, color: scheme.onPrimaryContainer),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: scheme.onPrimaryContainer,
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-              Text(
-                amountCents == 0 ? '—' : formatBirr(amountCents),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: scheme.onPrimaryContainer,
-                    ),
-              ),
-            ],
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.15),
         ),
-      ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: isTelebirr
+                  ? const Color(0xFF00A859).withValues(alpha: 0.3)
+                  : const Color(0xFFFFA000).withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              size: 16,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                Text(
+                  amountCents == 0 ? '—' : formatBirr(amountCents),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -587,7 +801,7 @@ class _PaymentFeed extends StatelessWidget {
       ...session.expenses.map(FeedItem.expense),
     ]..sort((a, b) => b.timestampMs.compareTo(a.timestampMs));
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(8, 4, 8, 16),
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 16),
       itemCount: items.length,
       itemBuilder: (context, index) => switch (items[index]) {
         FeedPayment(:final payment) => PaymentTile(
@@ -613,39 +827,64 @@ class _EmptyFeed extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
-    // Centered when there's room, scrollable when the live card (taller
-    // since the method split landed) leaves little — never overflows.
     return LayoutBuilder(
       builder: (context, constraints) => SingleChildScrollView(
         child: ConstrainedBox(
           constraints: BoxConstraints(minHeight: constraints.maxHeight),
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.sms_outlined, size: 56, color: scheme.outline),
-                  const SizedBox(height: 16),
-                  Text(
-                    l10n.feedWaitingTitle,
-                    style: Theme.of(context).textTheme.titleMedium,
+              padding: const EdgeInsets.all(28),
+              child: Container(
+                padding: const EdgeInsets.all(28),
+                decoration: BoxDecoration(
+                  color: scheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: scheme.outlineVariant.withValues(alpha: 0.35),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.feedWaitingBody,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                  ),
-                  const SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    onPressed: onAddCash,
-                    icon: const Icon(Icons.payments_outlined),
-                    label: Text(l10n.feedAddCash),
-                  ),
-                ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: scheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Icon(
+                        Icons.sensors_rounded,
+                        size: 32,
+                        color: scheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.feedWaitingTitle,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.feedWaitingBody,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                            height: 1.4,
+                          ),
+                    ),
+                    const SizedBox(height: 20),
+                    FilledButton.tonalIcon(
+                      onPressed: onAddCash,
+                      icon: const Icon(Icons.payments_outlined, size: 18),
+                      label: Text(l10n.feedAddCash),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

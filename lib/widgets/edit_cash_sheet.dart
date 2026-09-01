@@ -41,6 +41,7 @@ Future<CashEditResult?> showCashEditSheet(
     isScrollControlled: true,
     builder: (sheetContext) {
       final sheetL10n = sheetContext.l10n;
+      final scheme = Theme.of(sheetContext).colorScheme;
       int? parseCents() {
         final birr = num.tryParse(controller.text.replaceAll(',', '.'));
         return birr == null ? null : (birr * 100).round();
@@ -50,24 +51,56 @@ Future<CashEditResult?> showCashEditSheet(
         padding: EdgeInsets.only(
           left: 24,
           right: 24,
-          top: 24,
+          top: 12,
           bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(sheetL10n.editCashTitle,
-                style: Theme.of(sheetContext).textTheme.titleLarge),
-            const SizedBox(height: 4),
+            Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: scheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.edit_rounded,
+                    size: 20,
+                    color: scheme.onSecondaryContainer,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    sheetL10n.editCashTitle,
+                    style:
+                        Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 20,
+                            ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Text(
               sheetL10n.editCashBody,
-              style: Theme.of(sheetContext).textTheme.bodyMedium,
+              style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             TextField(
               controller: controller,
               autofocus: true,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [
@@ -82,11 +115,15 @@ Future<CashEditResult?> showCashEditSheet(
               },
               decoration: InputDecoration(
                 labelText: sheetL10n.cashAmountLabel,
-                border: const OutlineInputBorder(),
                 prefixText: 'ETB ',
+                prefixStyle: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: scheme.primary,
+                  fontSize: 18,
+                ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             FilledButton(
               onPressed: () {
                 final cents = parseCents();

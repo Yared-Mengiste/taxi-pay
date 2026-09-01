@@ -44,6 +44,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Welcome to Taxi Pay'), findsNothing);
     expect(find.text('Taxi Pay'), findsOneWidget);
-    expect(find.text('START'), findsOneWidget);
+    expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
   });
 }

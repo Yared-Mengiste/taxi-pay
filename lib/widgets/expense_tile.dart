@@ -19,34 +19,101 @@ class ExpenseTile extends StatelessWidget {
     final locale = Localizations.maybeLocaleOf(context)?.toString();
     final time = formatClock(expense.expenseTimestampMs, locale: locale);
     final isFuel = expense.category == ExpenseCategory.fuel;
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      leading: CircleAvatar(
-        backgroundColor: scheme.tertiaryContainer,
-        child: Icon(
-          isFuel
-              ? Icons.local_gas_station_rounded
-              : Icons.receipt_long_rounded,
-          color: scheme.onTertiaryContainer,
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+      child: Material(
+        color: scheme.surfaceContainerLow,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: scheme.outlineVariant.withValues(alpha: 0.35),
+            width: 1,
+          ),
         ),
-      ),
-      title: Text(
-        isFuel ? context.l10n.expenseFuel : context.l10n.expenseOther,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: const TextStyle(fontWeight: FontWeight.w600),
-      ),
-      subtitle: Text(
-        expense.note == null ? time : '${expense.note} · $time',
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      trailing: Text(
-        '−${formatBirr(expense.amountCents)}',
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: scheme.error,
-            ),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: scheme.errorContainer.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(
+                  isFuel
+                      ? Icons.local_gas_station_rounded
+                      : Icons.receipt_long_rounded,
+                  size: 22,
+                  color: scheme.error,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isFuel
+                          ? context.l10n.expenseFuel
+                          : context.l10n.expenseOther,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        if (expense.note != null) ...[
+                          Flexible(
+                            child: Text(
+                              expense.note!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: scheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                            ),
+                          ),
+                          Text(
+                            ' · ',
+                            style: TextStyle(color: scheme.outlineVariant),
+                          ),
+                        ],
+                        Text(
+                          time,
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: scheme.onSurfaceVariant,
+                                  ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '−${formatBirr(expense.amountCents)}',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: scheme.error,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

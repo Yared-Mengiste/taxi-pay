@@ -135,7 +135,6 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
     final telebirr = dashboard.byMethod[PaymentMethod.telebirr];
     final cash = dashboard.byMethod[PaymentMethod.cash];
     final periodLabel = switch (dashboard.period) {
@@ -143,87 +142,146 @@ class _SummaryCard extends StatelessWidget {
       DashboardPeriod.week => l10n.perWeek,
       DashboardPeriod.month => l10n.perMonth,
     };
-    return Card(
-      color: scheme.primaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              switch (dashboard.period) {
-                DashboardPeriod.day => l10n.window7Days,
-                DashboardPeriod.week => l10n.window8Weeks,
-                DashboardPeriod.month => l10n.window12Months,
-              },
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: scheme.onPrimaryContainer,
-                    letterSpacing: 1.2,
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              formatBirr(dashboard.totalCents),
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    color: scheme.onPrimaryContainer,
-                    fontWeight: FontWeight.w800,
-                  ),
-            ),
-            Text(
-              '${l10n.paymentsCount(dashboard.paymentCount)} · '
-              '${l10n.avgPerPeriod(formatBirr(dashboard.averagePerBucketCents), periodLabel)}',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: scheme.onPrimaryContainer,
-                  ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _MethodChip(
-                    icon: Icons.phone_iphone_rounded,
-                    label: 'teleBirr',
-                    amountCents: telebirr?.totalCents ?? 0,
-                    count: telebirr?.paymentCount ?? 0,
-                    color: scheme.onPrimaryContainer,
-                  ),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF005CB9), Color(0xFF003E80)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF005CB9).withValues(alpha: 0.25),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _MethodChip(
-                    icon: Icons.payments_rounded,
-                    label: l10n.actionCash,
-                    amountCents: cash?.totalCents ?? 0,
-                    count: cash?.paymentCount ?? 0,
-                    color: scheme.onPrimaryContainer,
-                  ),
+                child: Text(
+                  switch (dashboard.period) {
+                    DashboardPeriod.day => l10n.window7Days,
+                    DashboardPeriod.week => l10n.window8Weeks,
+                    DashboardPeriod.month => l10n.window12Months,
+                  },
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Colors.white,
+                        letterSpacing: 1.0,
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
-              ],
-            ),
-            if (dashboard.expenseTotalCents > 0) ...[
-              const SizedBox(height: 12),
-              Row(
+              ),
+              const Spacer(),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00A859).withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.analytics_outlined,
+                        size: 14, color: Colors.white),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Overview',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            formatBirr(dashboard.totalCents),
+            style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '${l10n.paymentsCount(dashboard.paymentCount)} · '
+            '${l10n.avgPerPeriod(formatBirr(dashboard.averagePerBucketCents), periodLabel)}',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.85),
+                ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _MethodChip(
+                  icon: Icons.phone_iphone_rounded,
+                  label: 'teleBirr',
+                  amountCents: telebirr?.totalCents ?? 0,
+                  count: telebirr?.paymentCount ?? 0,
+                  isTelebirr: true,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _MethodChip(
+                  icon: Icons.payments_rounded,
+                  label: l10n.actionCash,
+                  amountCents: cash?.totalCents ?? 0,
+                  count: cash?.paymentCount ?? 0,
+                  isTelebirr: false,
+                ),
+              ),
+            ],
+          ),
+          if (dashboard.expenseTotalCents > 0) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
                 children: [
-                  Icon(Icons.local_gas_station_rounded,
-                      size: 18, color: scheme.onPrimaryContainer),
+                  const Icon(Icons.local_gas_station_rounded,
+                      size: 16, color: Colors.white),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       '${l10n.expensesLabel(formatBirr(dashboard.expenseTotalCents))} · '
                       '${l10n.netLabel(formatBirr(dashboard.netCents))}',
-                      style:
-                          Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: scheme.onPrimaryContainer,
-                                fontWeight: FontWeight.w700,
-                              ),
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontFeatures: const [
+                              FontFeature.tabularFigures()
+                            ],
+                          ),
                     ),
                   ),
                 ],
               ),
-            ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -235,46 +293,67 @@ class _MethodChip extends StatelessWidget {
     required this.label,
     required this.amountCents,
     required this.count,
-    required this.color,
+    required this.isTelebirr,
   });
 
   final IconData icon;
   final String label;
   final int amountCents;
   final int count;
-  final Color color;
+  final bool isTelebirr;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 18, color: color),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-              Text(
-                count == 0 ? '—' : '${formatBirr(amountCents)} ($count)',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: color),
-              ),
-            ],
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.15),
         ),
-      ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: isTelebirr
+                  ? const Color(0xFF00A859).withValues(alpha: 0.3)
+                  : const Color(0xFFFFA000).withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 16, color: Colors.white),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                Text(
+                  count == 0 ? '—' : '${formatBirr(amountCents)} ($count)',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -289,17 +368,22 @@ class _RevenueChartCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final maxCents = dashboard.buckets.fold<int>(
         0, (max, b) => b.totalCents > max ? b.totalCents : max);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 16, 16, 8),
-        child: SizedBox(
-          height: 240,
-          child: _RevenueBarChart(
-            buckets: dashboard.buckets,
-            period: dashboard.period,
-            maxYBirr: (maxCents / 100) * 1.15, // headroom for tooltip
-            barColor: scheme.primary,
-          ),
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: 0.35),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(8, 16, 16, 12),
+      child: SizedBox(
+        height: 240,
+        child: _RevenueBarChart(
+          buckets: dashboard.buckets,
+          period: dashboard.period,
+          maxYBirr: (maxCents / 100) * 1.15, // headroom for tooltip
+          barColor: scheme.primary,
         ),
       ),
     );
@@ -359,6 +443,7 @@ class _RevenueBarChart extends StatelessWidget {
                   _compactBirr(value),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: scheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
                       ),
                 ),
               ),
@@ -379,6 +464,7 @@ class _RevenueBarChart extends StatelessWidget {
                     _bottomLabel(buckets[index].start, locale),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: scheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
                         ),
                   ),
                 );
@@ -393,7 +479,8 @@ class _RevenueBarChart extends StatelessWidget {
           drawVerticalLine: false,
           horizontalInterval: _gridInterval(maxYBirr),
           getDrawingHorizontalLine: (value) => FlLine(
-            color: scheme.outlineVariant.withValues(alpha: 0.4),
+            color: scheme.outlineVariant.withValues(alpha: 0.3),
+            strokeWidth: 1,
           ),
         ),
         borderData: FlBorderData(show: false),
@@ -407,9 +494,9 @@ class _RevenueBarChart extends StatelessWidget {
                   color: buckets[i].isEmpty
                       ? barColor.withValues(alpha: 0.25)
                       : barColor,
-                  width: 14,
+                  width: 16,
                   borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(4),
+                    top: Radius.circular(6),
                   ),
                 ),
               ],
@@ -448,27 +535,48 @@ class _EmptyDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          children: [
-            Icon(Icons.bar_chart_rounded, size: 56, color: scheme.outline),
-            const SizedBox(height: 16),
-            Text(
-              l10n.dashboardEmptyTitle,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.dashboardEmptyBody,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-            ),
-          ],
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: 0.35),
         ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: scheme.primaryContainer,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Icon(
+              Icons.bar_chart_rounded,
+              size: 32,
+              color: scheme.primary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            l10n.dashboardEmptyTitle,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.dashboardEmptyBody,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  height: 1.4,
+                ),
+          ),
+        ],
       ),
     );
   }
@@ -487,20 +595,32 @@ class _PastSessionsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Icon(Icons.history_rounded, size: 18, color: scheme.primary),
-            const SizedBox(width: 8),
-            Text(
-              context.l10n.sessionsTitle,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: scheme.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-          ],
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: scheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.history_rounded,
+                    size: 16, color: scheme.primary),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                context.l10n.sessionsTitle,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: scheme.primary,
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         for (final summary in dashboard.sessions)
           _SessionTile(
             summary: summary,
@@ -535,40 +655,89 @@ class _SessionTile extends StatelessWidget {
     if (summary.expenseTotalCents > 0) {
       subtitle.write(' · ${l10n.netLabel(formatBirr(summary.netCents))}');
     }
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        onTap: onTap,
-        leading: CircleAvatar(
-          backgroundColor: scheme.primaryContainer,
-          child: Icon(
-            Icons.directions_car_rounded,
-            color: scheme.onPrimaryContainer,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: scheme.surfaceContainerLow,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: scheme.outlineVariant.withValues(alpha: 0.35),
+            width: 1,
           ),
         ),
-        title: Text(
-          formatDayTime(session.startedAtMs, locale: locale),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Text(
-          subtitle.toString(),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              formatBirr(summary.totalCents),
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: scheme.primary,
-                    fontWeight: FontWeight.w700,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: scheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  child: Icon(
+                    Icons.directions_car_rounded,
+                    size: 20,
+                    color: scheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        formatDayTime(session.startedAtMs, locale: locale),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        subtitle.toString(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      formatBirr(summary.totalCents),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: scheme.primary,
+                            fontWeight: FontWeight.w800,
+                            fontFeatures: const [
+                              FontFeature.tabularFigures()
+                            ],
+                          ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 20,
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ],
+                ),
+              ],
             ),
-            const SizedBox(width: 4),
-            Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
-          ],
+          ),
         ),
       ),
     );

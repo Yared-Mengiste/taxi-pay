@@ -44,7 +44,7 @@ void main() {
     await settle(tester);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('START'));
+    await tester.tap(find.byIcon(Icons.play_arrow_rounded));
     await settle(tester);
     // No pumpAndSettle from here on: the live card's elapsed ticker fires
     // every second and would never settle.
@@ -59,7 +59,7 @@ void main() {
     await tester.tap(find.text('Keep going'));
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Stop this session?'), findsNothing);
-    expect(find.text('START'), findsNothing);
+    expect(find.byIcon(Icons.play_arrow_rounded), findsNothing);
   });
 
   testWidgets('confirming stop ends the shift and shows the summary',
@@ -71,7 +71,7 @@ void main() {
     await settle(tester);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('START'));
+    await tester.tap(find.byIcon(Icons.play_arrow_rounded));
     await settle(tester);
     await tester.pump();
 
@@ -81,7 +81,7 @@ void main() {
     await settle(tester);
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.text('START'), findsOneWidget);
+    expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
     expect(find.text('Shift finished'), findsOneWidget);
   });
 }

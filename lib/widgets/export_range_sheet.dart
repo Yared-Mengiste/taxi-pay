@@ -20,20 +20,60 @@ Future<(DateTime, DateTime)?> showExportRangeSheet(BuildContext context) {
     builder: (sheetContext) {
       final sheetL10n = sheetContext.l10n;
       final sheetNow = now;
+      final scheme = Theme.of(sheetContext).colorScheme;
       return SafeArea(
         child: ListView(
           shrinkWrap: true,
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
           children: [
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(l10n.exportRangeTitle,
-                  style: Theme.of(sheetContext).textTheme.titleMedium),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: scheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.ios_share_rounded,
+                      size: 20,
+                      color: scheme.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    l10n.exportRangeTitle,
+                    style:
+                        Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 19,
+                            ),
+                  ),
+                ],
+              ),
             ),
             for (final preset in ExportRangePreset.values)
               ListTile(
-                leading: Icon(_presetIcon(preset)),
-                title: Text(_presetLabel(preset, sheetL10n)),
+                leading: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    _presetIcon(preset),
+                    size: 20,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+                title: Text(
+                  _presetLabel(preset, sheetL10n),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
                 subtitle: preset == ExportRangePreset.allTime
                     ? null
                     // Inclusive display: the [from, to) window shown as
@@ -42,10 +82,33 @@ Future<(DateTime, DateTime)?> showExportRangeSheet(BuildContext context) {
                 onTap: () => Navigator.of(sheetContext)
                     .pop(exportWindowFor(preset, sheetNow)),
               ),
-            const Divider(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Divider(
+                color: scheme.outlineVariant.withValues(alpha: 0.35),
+              ),
+            ),
             ListTile(
-              leading: const Icon(Icons.date_range_rounded),
-              title: Text(l10n.exportRangeCustom),
+              leading: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: scheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.date_range_rounded,
+                  size: 20,
+                  color: scheme.primary,
+                ),
+              ),
+              title: Text(
+                l10n.exportRangeCustom,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: scheme.primary,
+                ),
+              ),
               onTap: () => _pickCustomRange(sheetContext),
             ),
             const SizedBox(height: 8),

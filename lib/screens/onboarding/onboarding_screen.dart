@@ -141,13 +141,19 @@ class _OnboardingScreenState extends State<OnboardingScreen>
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(3, (i) {
           final active = i == _step;
-          return Container(
-            width: active ? 24 : 8,
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            width: active ? 28 : 8,
             height: 8,
             margin: const EdgeInsets.symmetric(horizontal: 4),
             decoration: BoxDecoration(
+              gradient: active
+                  ? const LinearGradient(
+                      colors: [Color(0xFF005CB9), Color(0xFF00A859)],
+                    )
+                  : null,
               color: active
-                  ? Theme.of(context).colorScheme.primary
+                  ? null
                   : Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(4),
             ),
@@ -185,11 +191,13 @@ class _StepScaffold extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.body,
+    this.isSuccess = false,
   });
 
   final IconData icon;
   final String title;
   final Widget body;
+  final bool isSuccess;
 
   @override
   Widget build(BuildContext context) {
@@ -198,22 +206,43 @@ class _StepScaffold extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       children: [
         const SizedBox(height: 24),
-        Container(
-          width: 88,
-          height: 88,
-          decoration: BoxDecoration(
-            color: scheme.primaryContainer,
-            shape: BoxShape.circle,
+        Center(
+          child: Container(
+            width: 96,
+            height: 96,
+            decoration: BoxDecoration(
+              gradient: isSuccess
+                  ? const LinearGradient(
+                      colors: [Color(0xFF00A859), Color(0xFF00C853)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : const LinearGradient(
+                      colors: [Color(0xFF005CB9), Color(0xFF0072CE)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: (isSuccess ? const Color(0xFF00A859) : scheme.primary)
+                      .withValues(alpha: 0.25),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Icon(icon, size: 48, color: Colors.white),
           ),
-          child: Icon(icon, size: 44, color: scheme.onPrimaryContainer),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 28),
         Text(
           title,
+          textAlign: TextAlign.center,
           style: Theme.of(context)
               .textTheme
               .headlineSmall
-              ?.copyWith(fontWeight: FontWeight.w700),
+              ?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 16),
         body,
@@ -237,12 +266,22 @@ class _WelcomeStep extends StatelessWidget {
         children: [
           Text(
             context.l10n.onbWelcomeBody,
-            style: Theme.of(context).textTheme.bodyLarge,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  height: 1.5,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
           FilledButton(
             onPressed: onGetStarted,
-            child: Text(context.l10n.onbGetStarted),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(double.infinity, 50),
+            ),
+            child: Text(
+              context.l10n.onbGetStarted,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),
@@ -271,7 +310,8 @@ class _SmsStep extends StatelessWidget {
   Widget build(BuildContext context) {
     final grantedNow = granted == true;
     return _StepScaffold(
-      icon: grantedNow ? Icons.check_circle : Icons.sms_rounded,
+      icon: grantedNow ? Icons.check_circle_rounded : Icons.sms_rounded,
+      isSuccess: grantedNow,
       title: grantedNow
           ? context.l10n.onbSmsGrantedTitle
           : context.l10n.onbSmsTitle,
@@ -280,14 +320,24 @@ class _SmsStep extends StatelessWidget {
         children: [
           Text(
             context.l10n.onbSmsBody,
-            style: Theme.of(context).textTheme.bodyLarge,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  height: 1.5,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
           if (!grantedNow) ...[
             FilledButton.icon(
               onPressed: onRequest,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+              ),
               icon: const Icon(Icons.key_rounded),
-              label: Text(context.l10n.onbSmsTitle),
+              label: Text(
+                context.l10n.onbSmsTitle,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
             if (requestedAndDenied) ...[
               const SizedBox(height: 24),
@@ -297,10 +347,18 @@ class _SmsStep extends StatelessWidget {
               ),
             ],
           ] else ...[
-            OutlinedButton.icon(
+            FilledButton.icon(
               onPressed: onNext,
-              icon: const Icon(Icons.arrow_forward),
-              label: Text(context.l10n.onbContinue),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF00A859),
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 50),
+              ),
+              icon: const Icon(Icons.arrow_forward_rounded),
+              label: Text(
+                context.l10n.onbContinue,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
           ],
         ],
@@ -323,56 +381,67 @@ class _RestrictedSettingsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Card(
-      color: scheme.errorContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.lock_outline_rounded,
-                    color: scheme.onErrorContainer),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    context.l10n.onbRestrictedTitle,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(color: scheme.onErrorContainer),
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.errorContainer,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.lock_outline_rounded,
+                  color: scheme.onErrorContainer, size: 22),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  context.l10n.onbRestrictedTitle,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: scheme.onErrorContainer,
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            context.l10n.onbRestrictedBody,
+            style: TextStyle(
+              color: scheme.onErrorContainer,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 14),
+          _step(context, '1', context.l10n.onbStep1),
+          _step(context, '2', context.l10n.onbStep2),
+          _step(context, '3', context.l10n.onbStep3),
+          _step(context, '4', context.l10n.onbStep4),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilledButton.tonalIcon(
+                onPressed: onOpenSettings,
+                icon: const Icon(Icons.settings_rounded, size: 18),
+                label: Text(context.l10n.onbOpenSettings),
+              ),
+              OutlinedButton(
+                onPressed: onRecheck,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: scheme.onErrorContainer,
+                  side: BorderSide(
+                    color: scheme.onErrorContainer.withValues(alpha: 0.5),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              context.l10n.onbRestrictedBody,
-              style: TextStyle(color: scheme.onErrorContainer),
-            ),
-            const SizedBox(height: 12),
-            _step(context, '1', context.l10n.onbStep1),
-            _step(context, '2', context.l10n.onbStep2),
-            _step(context, '3', context.l10n.onbStep3),
-            _step(context, '4', context.l10n.onbStep4),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              children: [
-                FilledButton.tonalIcon(
-                  onPressed: onOpenSettings,
-                  icon: const Icon(Icons.settings_rounded),
-                  label: Text(context.l10n.onbOpenSettings),
-                ),
-                OutlinedButton(
-                  onPressed: onRecheck,
-                  child: Text(context.l10n.onbCheckAgain),
-                ),
-              ],
-            ),
-          ],
-        ),
+                child: Text(context.l10n.onbCheckAgain),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -390,9 +459,9 @@ class _RestrictedSettingsCard extends StatelessWidget {
             child: Text(
               n,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 color: scheme.errorContainer,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),
@@ -400,7 +469,10 @@ class _RestrictedSettingsCard extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: TextStyle(color: scheme.onErrorContainer),
+              style: TextStyle(
+                color: scheme.onErrorContainer,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
@@ -429,6 +501,7 @@ class _BatteryStep extends StatelessWidget {
       icon: exemptNow
           ? Icons.battery_charging_full_rounded
           : Icons.battery_saver_rounded,
+      isSuccess: exemptNow,
       title: exemptNow
           ? context.l10n.onbBatteryOkTitle
           : context.l10n.onbBatteryTitle,
@@ -437,25 +510,46 @@ class _BatteryStep extends StatelessWidget {
         children: [
           Text(
             context.l10n.onbBatteryBody,
-            style: Theme.of(context).textTheme.bodyLarge,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  height: 1.5,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
           if (!exemptNow) ...[
             FilledButton.icon(
               onPressed: onRequest,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+              ),
               icon: const Icon(Icons.bolt_rounded),
-              label: Text(context.l10n.onbAllowBackground),
+              label: Text(
+                context.l10n.onbAllowBackground,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             OutlinedButton(
               onPressed: onRecheck,
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 44),
+              ),
               child: Text(context.l10n.onbCheckAgain),
             ),
           ] else ...[
-            OutlinedButton.icon(
+            FilledButton.icon(
               onPressed: onDone,
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF00A859),
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 50),
+              ),
               icon: const Icon(Icons.check_rounded),
-              label: Text(context.l10n.onbAllSet),
+              label: Text(
+                context.l10n.onbAllSet,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
           ],
         ],
