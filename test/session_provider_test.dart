@@ -165,6 +165,34 @@ void main() {
     expect(provider.totalCents, 5000 + 9000);
   });
 
+  test('recentSessions keeps the three newest ended shifts, newest first',
+      () async {
+    final sessions = SessionRepository(db);
+    // Four finished shifts, oldest first.
+    for (var i = 0; i < 4; i++) {
+      final s = await sessions.startSession(nowMs: 1000 + i * 100000);
+      await PaymentRepository(db).addCashPayment(
+          sessionId: s.id,
+          amountCents: 1000 + i,
+          timestampMs: s.startedAtMs + 1);
+      await sessions.stopSession(nowMs: s.startedAtMs + 60000);
+    }
+
+    await provider.load();
+    expect(provider.recentSessions, hasLength(3));
+    expect(provider.recentSessions.first.totalCents, 1003);
+    expect(provider.recentSessions.first.paymentCount, 1);
+
+    // Stopping another session puts it at the head of the history.
+    await provider.start();
+    await provider.addCash(amountCents: 5000);
+    await provider.stop();
+    expect(provider.recentSessions, hasLength(3));
+    expect(provider.recentSessions.first.totalCents, 5000);
+    expect(provider.lastEndedSession!.id,
+        provider.recentSessions.first.session.id);
+  });
+
   test('cold start recovers an active session from the DB', () async {
     // A session was running when the "app died": only the DB row survives.
     final repo = SessionRepository(db);

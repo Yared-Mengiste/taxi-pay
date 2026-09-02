@@ -8,6 +8,7 @@
   "homeStart": "START",
   "homeIdleHint": "Ready to work? Start a session to track teleBirr payments.",
   "shiftFinished": "Shift finished",
+  "recentRoutes": "Recent routes",
   "paymentsCount": "{count, plural, =1{{count} payment} other{{count} payments}}",
   "liveSince": "LIVE · since {time}",
   "paymentsThisSession": "{count, plural, =1{{count} payment this session} other{{count} payments this session}}",

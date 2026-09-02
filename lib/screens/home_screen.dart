@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/l10n.dart';
+import '../data/db/session_repository.dart';
 import '../models/feed_item.dart';
 import '../models/payment.dart';
 import '../providers/session_provider.dart';
@@ -26,7 +27,6 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -83,7 +83,7 @@ class HomeScreen extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Idle: big Start control (+ summary of the shift that just ended)
+// Idle: big Start control + the last few finished shifts
 // ---------------------------------------------------------------------------
 
 class _IdleView extends StatelessWidget {
@@ -93,19 +93,17 @@ class _IdleView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lastEnded = session.lastEndedSession;
+    final recent = session.recentSessions;
+    final older = recent.skip(1).toList();
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       children: [
-        if (lastEnded != null) ...[
-          _ShiftSummaryCard(
-            startedAtMs: lastEnded.startedAtMs,
-            endedAtMs: lastEnded.endedAtMs ?? lastEnded.startedAtMs,
-            totalCents: session.lastEndedTotalCents,
-            expenseTotalCents: session.lastEndedExpenseTotalCents,
-            netCents: session.lastEndedNetCents,
-            paymentCount: session.lastEndedPayments.length,
-          ),
+        if (recent.isNotEmpty) ...[
+          _ShiftSummaryCard(summary: recent.first),
+          if (older.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            _RecentRoutesSection(routes: older),
+          ],
           const SizedBox(height: 32),
         ] else ...[
           const SizedBox(height: 48),
@@ -235,26 +233,16 @@ class _StartButton extends StatelessWidget {
 }
 
 class _ShiftSummaryCard extends StatelessWidget {
-  const _ShiftSummaryCard({
-    required this.startedAtMs,
-    required this.endedAtMs,
-    required this.totalCents,
-    required this.expenseTotalCents,
-    required this.netCents,
-    required this.paymentCount,
-  });
+  const _ShiftSummaryCard({required this.summary});
 
-  final int startedAtMs;
-  final int endedAtMs;
-  final int totalCents;
-  final int expenseTotalCents;
-  final int netCents;
-  final int paymentCount;
+  final SessionSummary summary;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
+    final startedAtMs = summary.session.startedAtMs;
+    final endedAtMs = summary.session.endedAtMs ?? startedAtMs;
     return Container(
       decoration: BoxDecoration(
         color: scheme.surfaceContainerLow,
@@ -310,7 +298,7 @@ class _ShiftSummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            formatBirr(totalCents),
+            formatBirr(summary.totalCents),
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                   fontWeight: FontWeight.w900,
                   color: scheme.primary,
@@ -318,7 +306,7 @@ class _ShiftSummaryCard extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: 6),
-          if (expenseTotalCents > 0) ...[
+          if (summary.expenseTotalCents > 0) ...[
             Row(
               children: [
                 Container(
@@ -329,7 +317,7 @@ class _ShiftSummaryCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    l10n.expensesLabel(formatBirr(expenseTotalCents)),
+                    l10n.expensesLabel(formatBirr(summary.expenseTotalCents)),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: scheme.error,
                           fontWeight: FontWeight.w700,
@@ -345,7 +333,7 @@ class _ShiftSummaryCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    l10n.netLabel(formatBirr(netCents)),
+                    l10n.netLabel(formatBirr(summary.netCents)),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: scheme.onTertiaryContainer,
                           fontWeight: FontWeight.w700,
@@ -357,9 +345,119 @@ class _ShiftSummaryCard extends StatelessWidget {
             const SizedBox(height: 8),
           ],
           Text(
-            l10n.paymentsCount(paymentCount),
+            l10n.paymentsCount(summary.paymentCount),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Recent routes" — the shifts before the newest one, at a glance: when it
+/// ran, how long, how many payments, how much it grossed.
+class _RecentRoutesSection extends StatelessWidget {
+  const _RecentRoutesSection({required this.routes});
+
+  final List<SessionSummary> routes;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            context.l10n.recentRoutes,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+        ),
+        for (final route in routes)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _RecentRouteTile(summary: route),
+          ),
+      ],
+    );
+  }
+}
+
+class _RecentRouteTile extends StatelessWidget {
+  const _RecentRouteTile({required this.summary});
+
+  final SessionSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final locale = Localizations.maybeLocaleOf(context)?.toString();
+    final scheme = Theme.of(context).colorScheme;
+    final startedAtMs = summary.session.startedAtMs;
+    final endedAtMs = summary.session.endedAtMs ?? startedAtMs;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: scheme.secondaryContainer,
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(
+              Icons.route_rounded,
+              size: 18,
+              color: scheme.onSecondaryContainer,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  formatDayTime(startedAtMs, locale: locale),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${formatDuration(startedAtMs, endedAtMs)}'
+                  ' · ${l10n.paymentsCount(summary.paymentCount)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            formatBirr(summary.totalCents),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: scheme.primary,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
           ),
         ],
@@ -381,7 +479,6 @@ class _LiveSessionView extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final locale = Localizations.maybeLocaleOf(context)?.toString();
-    final scheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

@@ -22,7 +22,8 @@ import '../services/reconciliation_service.dart';
 ///  - react to captured payments arriving via [capturedPayments] and to app
 ///    resume (picks up writes made by the background isolate);
 ///  - run reconciliation on demand (manual sync button) and on resume;
-///  - keep a summary of the just-ended session around for the stop screen;
+///  - keep a summary of the just-ended session around for the stop screen,
+///    plus the 3 most recent ended sessions as the idle screen's history;
 ///  - schedule/unschedule periodic reconciliation with the session's life.
 class SessionProvider extends ChangeNotifier with WidgetsBindingObserver {
   SessionProvider({
@@ -63,6 +64,8 @@ class SessionProvider extends ChangeNotifier with WidgetsBindingObserver {
   Session? _lastEndedSession;
   List<Payment> _lastEndedPayments = const [];
   List<Expense> _lastEndedExpenses = const [];
+
+  List<SessionSummary> _recentSessions = const [];
 
   bool _disposed = false;
   bool _reconciling = false;
@@ -129,9 +132,17 @@ class SessionProvider extends ChangeNotifier with WidgetsBindingObserver {
   int get lastEndedNetCents =>
       lastEndedTotalCents - lastEndedExpenseTotalCents;
 
+  /// The most recently ended sessions, newest first (max 3) — the idle
+  /// home screen's history list. DB-backed, so it survives cold starts.
+  List<SessionSummary> get recentSessions =>
+      List.unmodifiable(_recentSessions);
+
   /// Initial load — also the cold-start recovery path: whatever the DB says
   /// is the truth, including "a session was running when the app died".
-  Future<void> load() => _reloadActive();
+  Future<void> load() async {
+    await _reloadActive();
+    await _reloadRecent();
+  }
 
   Future<void> start() async {
     _activeSession = await _sessionsRepo.startSession();
@@ -155,6 +166,7 @@ class SessionProvider extends ChangeNotifier with WidgetsBindingObserver {
     _activeSession = null;
     _payments = [];
     _expenses = [];
+    await _reloadRecent();
     _notify();
   }
 
@@ -248,6 +260,16 @@ class SessionProvider extends ChangeNotifier with WidgetsBindingObserver {
           await _expensesRepo.expensesForSession(_activeSession!.id);
     }
     _walletBalanceCents = await _paymentsRepo.latestTelebirrBalanceCents();
+    _notify();
+  }
+
+  /// Refreshes the idle screen's history list. Only stop can change which
+  /// sessions have ended, so [stop] and [load] are the only callers.
+  Future<void> _reloadRecent() async {
+    _recentSessions = await _sessionsRepo.recentSessions(limit: 3);
+    // Notifies on its own: during [load] this lands *after* the notify in
+    // [_reloadActive], and without one the idle screen would keep showing
+    // a stale (possibly empty) history until some unrelated rebuild.
     _notify();
   }
 

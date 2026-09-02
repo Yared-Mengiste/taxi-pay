@@ -1,8 +1,11 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:taxi_pay/app.dart';
 import 'package:taxi_pay/data/db/app_database.dart';
+import 'package:taxi_pay/data/db/payment_repository.dart';
+import 'package:taxi_pay/data/db/session_repository.dart';
 import 'package:taxi_pay/services/settings_service.dart';
 
 void main() {
@@ -83,5 +86,63 @@ void main() {
 
     expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
     expect(find.text('Shift finished'), findsOneWidget);
+  });
+
+  testWidgets(
+      'idle home shows the three most recent routes, newest after stop',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(const {'onboarded': true});
+    final prefs = await SharedPreferences.getInstance();
+
+    // Two finished shifts already in history. Real sqflite round-trips,
+    // so they need a real-async window before pumping begins.
+    await tester.runAsync(() async {
+      final sessions = SessionRepository(app);
+      final payments = PaymentRepository(app);
+      for (var i = 0; i < 2; i++) {
+        final s = await sessions.startSession(nowMs: 1000 + i * 100000);
+        await payments.addCashPayment(
+            sessionId: s.id,
+            amountCents: 1500,
+            timestampMs: s.startedAtMs + 1000);
+        await sessions.stopSession(nowMs: s.startedAtMs + 7200000);
+      }
+    });
+
+    await tester.pumpWidget(
+        TaxiPayApp(settings: SettingsService(prefs), app: app));
+    // Generous real-async window for the providers' load() chains — the
+    // same pattern as widget_test.dart; settle() alone proved marginal.
+    await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 200)));
+    await settle(tester);
+    await tester.pumpAndSettle();
+
+    // Cold start: the history is there before any session runs — the
+    // newest shift as the hero card, the one older as a route tile.
+    expect(find.text('Shift finished'), findsOneWidget);
+    expect(find.text('Recent routes'), findsOneWidget);
+    expect(find.byIcon(Icons.route_rounded), findsOneWidget);
+
+    // Start -> live UI; stop -> the new shift heads the 3-route history.
+    await tester.tap(find.byIcon(Icons.play_arrow_rounded));
+    await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 200)));
+    await settle(tester);
+    await tester.pump();
+    expect(find.byIcon(Icons.route_rounded), findsNothing);
+
+    await tester.tap(find.text('Stop'));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Stop session'));
+    await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 200)));
+    await settle(tester);
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
+    expect(find.text('Shift finished'), findsOneWidget);
+    expect(find.text('Recent routes'), findsOneWidget);
+    expect(find.byIcon(Icons.route_rounded), findsNWidgets(2));
   });
 }

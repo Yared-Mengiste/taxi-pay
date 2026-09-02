@@ -134,6 +134,12 @@ abstract class AppLocalizations {
   /// **'Shift finished'**
   String get shiftFinished;
 
+  /// No description provided for @recentRoutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent routes'**
+  String get recentRoutes;
+
   /// No description provided for @paymentsCount.
   ///
   /// In en, this message translates to:

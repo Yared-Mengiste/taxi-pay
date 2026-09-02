@@ -8,6 +8,7 @@
   "homeStart": "ጀምር",
   "homeIdleHint": "ለስራ ዝግጁ? የተሌቢር ክፍያዎችን ለመከታተል ክፍለ ጊዜ ይጀምሩ።",
   "shiftFinished": "ስራው አለቀ",
+  "recentRoutes": "የቅርብ ጊዜ መንገዶች",
   "paymentsCount": "{count, plural, other{{count} ክፍያ}}",
   "liveSince": "በሂደት ላይ · ከ{time} ጀምሮ",
   "paymentsThisSession": "{count, plural, other{በዚህ ክፍለ ጊዜ {count} ክፍያ}}",

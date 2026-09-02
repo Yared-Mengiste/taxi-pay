@@ -28,6 +28,9 @@ class AppLocalizationsAm extends AppLocalizations {
   String get shiftFinished => 'ስራው አለቀ';
 
   @override
+  String get recentRoutes => 'የቅርብ ጊዜ መንገዶች';
+
+  @override
   String paymentsCount(num count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

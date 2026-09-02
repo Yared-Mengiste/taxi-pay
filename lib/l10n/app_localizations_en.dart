@@ -29,6 +29,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shiftFinished => 'Shift finished';
 
   @override
+  String get recentRoutes => 'Recent routes';
+
+  @override
   String paymentsCount(num count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
