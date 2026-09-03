@@ -140,6 +140,10 @@ built — 18 steps, one per feature group, each explaining the Flutter/Dart
 concepts, the Android-specific behavior, and the bugs the tests caught along
 the way. Read it alongside the git history.
 
+[![Download Latest APK](https://img.shields.io/github/v/release/Yared-Mengiste/taxi-pay?label=Download%20APK&logo=android&color=teal)](https://github.com/Yared-Mengiste/taxi-pay/releases/latest)
+
+> 📲 **Want to try Taxi Pay?** Download the latest Android APK from the [Releases page](https://github.com/Yared-Mengiste/taxi-pay/releases/latest) and install it on your device.
+
 ## License
 
 All rights reserved — personal project, not yet licensed for reuse.
